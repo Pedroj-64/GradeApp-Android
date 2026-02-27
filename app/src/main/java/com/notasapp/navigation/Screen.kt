@@ -43,6 +43,9 @@ sealed class Screen(val route: String) {
         fun createRoute(materiaId: Long) = "materia/$materiaId/export"
     }
 
+    // ── Estadísticas del semestre ────────────────────────────────
+    data object Estadisticas : Screen("estadisticas")
+
     // ── Configuración global ────────────────────────────────────
     data object Settings : Screen("settings")
 }

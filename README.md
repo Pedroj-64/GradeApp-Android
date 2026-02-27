@@ -109,12 +109,14 @@ app/
 - [x] Cálculo de promedio ponderado
 - [x] UI con Material Design 3
 
-### 🔄 Fase 2 - UX Pulida
-- [ ] Animaciones Compose
-- [ ] Drag & drop funcional (reorderable)
-- [ ] Calculadora "¿Qué nota necesito?"
-- [ ] Modo oscuro (ya soportado vía sistema)
-- [ ] Pantalla de estadísticas del semestre
+### ✅ Fase 2 - UX Pulida
+- [x] Animaciones Compose (entrada escalonada, animateContentSize, AnimatedText)
+- [x] Drag & drop funcional (reorderable con handle, elevación y feedback háptico)
+- [x] Calculadora "¿Qué nota necesito?" (BottomSheet integrado en detalle)
+- [x] Modo oscuro (soportado vía sistema — Dynamic Color Android 12+)
+- [x] Pantalla de estadísticas del semestre
+- [x] Componentes reutilizables (ShimmerLoading, PromedioGauge, SwipeToDeleteWrapper, GradeBadges)
+- [x] Shimmer skeleton en carga de Home y Detalle
 
 ### 📅 Fase 3 - Cloud & Export
 - [ ] Exportar a .xlsx (Apache POI - parcialmente implementado)
