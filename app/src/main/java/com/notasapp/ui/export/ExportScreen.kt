@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -94,6 +95,13 @@ fun ExportScreen(
         )
     ) { uri ->
         uri?.let { viewModel.exportarExcelSAF(it) }
+    }
+
+    // Launcher SAF: el usuario elige dónde guardar el .pdf
+    val createPdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        uri?.let { viewModel.exportarPdfSAF(it) }
     }
 
     // Launcher para el Intent de recuperación OAuth2 de Google
@@ -200,6 +208,22 @@ fun ExportScreen(
                     }
                 }
             }
+
+            HorizontalDivider()
+
+            // ── Tarjeta PDF ─────────────────────────────────────────────────
+            ExportCard(
+                title = "Resumen PDF",
+                description = "Genera un PDF con el resumen completo de la materia: promedio, componentes, notas parciales y aportes.",
+                actionLabel = if (uiState.isExporting) null else "Guardar como PDF",
+                actionIcon = Icons.Default.PictureAsPdf,
+                isLoading = uiState.isExporting,
+                isDone = false,
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                onAction = {
+                    createPdfLauncher.launch(viewModel.sugerirNombrePdf())
+                }
+            )
 
             HorizontalDivider()
 

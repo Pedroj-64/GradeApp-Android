@@ -248,7 +248,7 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text  = "Versión 1.0.7",
+                                    text  = "Versión 1.9.0",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -264,13 +264,13 @@ fun SettingsScreen(
                         HorizontalDivider()
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            text       = "Desarrollado por MargaDev-Society",
+                            text       = "Desarrollado por Pedro Jose Soto Rivera,MargaDev-Society y Asociados",
                             style      = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color      = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text  = "Hecho parchado y con mucho <3 para miripili",
+                            text  = "Agradecimientos especiales a los testers y colaboradores que hicieron posible esta app. \n\n¡Gracias por usar Gradify! \n\n Dedicado a miripili <3",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

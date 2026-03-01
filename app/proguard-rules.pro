@@ -24,11 +24,6 @@
 -keep class com.google.api.client.** { *; }
 -dontwarn com.google.api.client.**
 
-# ── Apache POI ───────────────────────────────────────────────────
--dontwarn org.apache.poi.**
--dontwarn org.apache.xmlbeans.**
--keep class org.apache.poi.** { *; }
-
 # ── Kotlin Serialization / Coroutines ───────────────────────────
 -keep class kotlin.coroutines.** { *; }
 -dontwarn kotlin.coroutines.**

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,13 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
+}
+
+// Cargar local.properties para leer secretos (GOOGLE_CLIENT_ID, etc.)
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) {
+    localPropsFile.inputStream().use { localProps.load(it) }
 }
 
 android {
@@ -22,7 +31,12 @@ android {
         buildConfigField(
             "String",
             "GOOGLE_CLIENT_ID",
-            "\"${project.findProperty("GOOGLE_CLIENT_ID") ?: "YOUR_WEB_CLIENT_ID_HERE"}\""
+            "\"${localProps.getProperty("GOOGLE_CLIENT_ID") ?: "YOUR_WEB_CLIENT_ID_HERE"}\""
+        )
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${localProps.getProperty("GEMINI_API_KEY") ?: ""}\""
         )
         vectorDrawables {
             useSupportLibrary = true
@@ -64,11 +78,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // Excluir dependencias pesadas de Apache POI que no aplican en Android
-            excludes += "META-INF/versions/**"
-            excludes += "META-INF/DEPENDENCIES"
-            excludes += "META-INF/LICENSE*"
-            excludes += "META-INF/NOTICE*"
         }
     }
 }
@@ -124,12 +133,6 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
-
-    // Apache POI (exportar .xlsx) - excluir modulos innecesarios para reducir tamano
-    implementation(libs.apache.poi.ooxml) {
-        exclude(group = "org.apache.xmlgraphics")
-        exclude(group = "com.github.virtuald")
-    }
 
     // Drag & Drop
     implementation(libs.reorderable)

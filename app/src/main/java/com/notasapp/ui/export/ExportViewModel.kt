@@ -13,6 +13,7 @@ import com.notasapp.domain.repository.MateriaRepository
 import com.notasapp.domain.repository.SheetsRepository
 import com.notasapp.navigation.Screen
 import com.notasapp.utils.ExcelExporter
+import com.notasapp.utils.PdfExporter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
@@ -43,6 +46,7 @@ class ExportViewModel @Inject constructor(
     private val sheetsRepository: SheetsRepository,
     private val userPrefsRepository: UserPreferencesRepository,
     private val excelExporter: ExcelExporter,
+    private val pdfExporter: PdfExporter,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -62,6 +66,11 @@ class ExportViewModel @Inject constructor(
     fun sugerirNombreArchivo(): String = "notas_materia_${materiaId}.xlsx"
 
     /**
+     * Nombre sugerido para el archivo .pdf al abrir el SAF picker.
+     */
+    fun sugerirNombrePdf(): String = "notas_materia_${materiaId}.pdf"
+
+    /**
      * Exporta la materia a .xlsx escribiendo en el URI elegido por el usuario (SAF).
      *
      * El usuario abre el selector de archivos del sistema con [ActivityResultContracts.CreateDocument]
@@ -76,11 +85,29 @@ class ExportViewModel @Inject constructor(
                 val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
                     ?: throw IllegalStateException("Materia no encontrada")
 
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    excelExporter.exportarToOutputStream(materia, outputStream)
-                } ?: throw IOException("No se pudo abrir el archivo destino")
+                withContext(Dispatchers.IO) {
+                    // Build the bytes fully in memory first
+                    val bytes = excelExporter.buildWorkbookBytes(materia)
+                    Timber.d("Excel bytes generados: ${bytes.size} para ${materia.nombre}")
 
-                Timber.i("Excel guardado en SAF: $uri")
+                    if (bytes.isEmpty()) {
+                        throw IllegalStateException(
+                            "El archivo Excel generado tiene 0 bytes — error interno de POI"
+                        )
+                    }
+
+                    // Write bytes to SAF URI
+                    val outputStream = context.contentResolver.openOutputStream(uri)
+                        ?: throw IOException("No se pudo abrir el archivo destino")
+
+                    outputStream.use { os ->
+                        os.write(bytes)
+                        os.flush()
+                    }
+
+                    Timber.i("Excel guardado en SAF: $uri (${bytes.size} bytes)")
+                }
+
                 _uiState.update {
                     it.copy(
                         isExporting      = false,
@@ -113,12 +140,15 @@ class ExportViewModel @Inject constructor(
                 val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
                     ?: throw IllegalStateException("Materia no encontrada")
 
-                val file = excelExporter.exportar(context, materia)
-                val uri  = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.provider",
-                    file
-                )
+                val (file, uri) = withContext(Dispatchers.IO) {
+                    val f = excelExporter.exportar(context, materia)
+                    val u = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.provider",
+                        f
+                    )
+                    f to u
+                }
 
                 Timber.i("Excel generado: ${file.absolutePath}")
                 _uiState.update {
@@ -135,6 +165,45 @@ class ExportViewModel @Inject constructor(
                     it.copy(
                         isExporting = false,
                         exportError = "Error al exportar: ${e.localizedMessage}"
+                    )
+                }
+            }
+        }
+    }
+
+    // ── PDF ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Exporta la materia a .pdf escribiendo en el URI elegido por el usuario (SAF).
+     */
+    fun exportarPdfSAF(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isExporting = true, exportError = null, exportSuccess = false) }
+            try {
+                val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
+                    ?: throw IllegalStateException("Materia no encontrada")
+
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        pdfExporter.exportarMateriaToOutputStream(materia, outputStream)
+                    } ?: throw IOException("No se pudo abrir el archivo destino")
+                }
+
+                Timber.i("PDF guardado en SAF: $uri")
+                _uiState.update {
+                    it.copy(
+                        isExporting      = false,
+                        exportSuccess    = true,
+                        exportedFilePath = uri.toString(),
+                        exportedFileUri  = uri
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error al exportar PDF SAF")
+                _uiState.update {
+                    it.copy(
+                        isExporting = false,
+                        exportError = "Error al guardar PDF: ${e.localizedMessage}"
                     )
                 }
             }

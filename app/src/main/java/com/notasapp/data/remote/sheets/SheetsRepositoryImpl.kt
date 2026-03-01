@@ -86,8 +86,12 @@ class SheetsRepositoryImpl @Inject constructor(
                 message = "Error de conexión: ${e.localizedMessage ?: "Error de red"}",
                 cause = e
             )
+            is NullPointerException -> NetworkResult.Error(
+                message = "Error interno: cuenta de Google no configurada correctamente. Cierra sesión e inicia de nuevo.",
+                cause = e
+            )
             else -> NetworkResult.Error(
-                message = "Error inesperado: ${e.localizedMessage}",
+                message = "Error inesperado: ${e.localizedMessage ?: e.javaClass.simpleName}",
                 cause = e
             )
         }

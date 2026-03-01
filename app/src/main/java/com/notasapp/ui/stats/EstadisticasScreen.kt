@@ -50,6 +50,10 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -205,6 +209,18 @@ private fun EstadisticasContent(
             }
         }
 
+        // Gráfico de evolución por semestre (línea)
+        if (stats.semestres.size > 1) {
+            item {
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(tween(850)) + slideInVertically(tween(850)) { -it / 3 }
+                ) {
+                    SemesterEvolutionChart(semestres = stats.semestres)
+                }
+            }
+        }
+
         // Historial por semestre
         if (stats.semestres.size > 1) {
             item {
@@ -328,6 +344,7 @@ private fun EstadoGrid(
                 onContainerColor = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.weight(1f)
             )
+            @Suppress("DEPRECATION")
             EstadoTile(
                 label = "Sin notas",
                 count = sinNotas,
@@ -549,6 +566,163 @@ private fun RendimientoBarChart(
                             paint
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+// ── Gráfico de evolución por semestre (línea) ─────────────────────────────────
+
+@Composable
+private fun SemesterEvolutionChart(
+    semestres: List<Semestre>,
+    modifier: Modifier = Modifier
+) {
+    val lineColor = MaterialTheme.colorScheme.primary
+    val dotColor = MaterialTheme.colorScheme.primary
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+
+    // Filter semestres that have a promedio
+    val dataSemestres = semestres.filter { it.promedioSimple != null }
+    if (dataSemestres.size < 2) return
+
+    val promedios = dataSemestres.map { it.promedioSimple!! }
+    val maxVal = promedios.max().coerceAtLeast(5f)
+    val minVal = 0f
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.School,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Evolución por semestre",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                val leftPadding = 40.dp.toPx()
+                val rightPadding = 16.dp.toPx()
+                val topPadding = 12.dp.toPx()
+                val bottomPadding = 32.dp.toPx()
+
+                val chartWidth = size.width - leftPadding - rightPadding
+                val chartHeight = size.height - topPadding - bottomPadding
+                val range = (maxVal - minVal).coerceAtLeast(1f)
+
+                val pointCount = dataSemestres.size
+                val stepX = if (pointCount > 1) chartWidth / (pointCount - 1) else chartWidth
+
+                // Y axis grid lines (4 lines)
+                val gridSteps = 4
+                for (i in 0..gridSteps) {
+                    val yVal = minVal + (range / gridSteps) * i
+                    val y = topPadding + chartHeight - (chartHeight * ((yVal - minVal) / range))
+                    drawLine(
+                        color = gridColor,
+                        start = Offset(leftPadding, y),
+                        end = Offset(size.width - rightPadding, y),
+                        strokeWidth = 1.dp.toPx()
+                    )
+                    // Y axis label
+                    drawContext.canvas.nativeCanvas.drawText(
+                        "%.1f".format(yVal),
+                        4.dp.toPx(),
+                        y + 4.dp.toPx(),
+                        android.graphics.Paint().apply {
+                            color = textColor.hashCode()
+                            textSize = 10.sp.toPx()
+                            isAntiAlias = true
+                        }
+                    )
+                }
+
+                // Calculate points
+                val points = dataSemestres.mapIndexed { index, semestre ->
+                    val x = leftPadding + index * stepX
+                    val normalized = ((semestre.promedioSimple!! - minVal) / range).coerceIn(0f, 1f)
+                    val y = topPadding + chartHeight - (chartHeight * normalized)
+                    Offset(x, y)
+                }
+
+                // Fill area under the line
+                if (points.size >= 2) {
+                    val fillPath = Path().apply {
+                        moveTo(points.first().x, topPadding + chartHeight)
+                        lineTo(points.first().x, points.first().y)
+                        for (i in 1 until points.size) {
+                            lineTo(points[i].x, points[i].y)
+                        }
+                        lineTo(points.last().x, topPadding + chartHeight)
+                        close()
+                    }
+                    drawPath(fillPath, fillColor)
+                }
+
+                // Draw line
+                if (points.size >= 2) {
+                    val linePath = Path().apply {
+                        moveTo(points.first().x, points.first().y)
+                        for (i in 1 until points.size) {
+                            lineTo(points[i].x, points[i].y)
+                        }
+                    }
+                    drawPath(
+                        linePath,
+                        color = lineColor,
+                        style = Stroke(
+                            width = 3.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round
+                        )
+                    )
+                }
+
+                // Draw dots and X axis labels
+                points.forEachIndexed { index, point ->
+                    // Dot
+                    drawCircle(
+                        color = Color.White,
+                        radius = 6.dp.toPx(),
+                        center = point
+                    )
+                    drawCircle(
+                        color = dotColor,
+                        radius = 4.dp.toPx(),
+                        center = point
+                    )
+
+                    // X label (semester name)
+                    val label = dataSemestres[index].periodo
+                    val shortLabel = if (label.length > 7) label.takeLast(7) else label
+                    drawContext.canvas.nativeCanvas.drawText(
+                        shortLabel,
+                        point.x - 16.dp.toPx(),
+                        size.height - 4.dp.toPx(),
+                        android.graphics.Paint().apply {
+                            color = textColor.hashCode()
+                            textSize = 9.sp.toPx()
+                            isAntiAlias = true
+                        }
+                    )
                 }
             }
         }

@@ -35,6 +35,7 @@ class UserPreferencesRepository @Inject constructor(
     companion object {
         private val KEY_USER_EMAIL        = stringPreferencesKey("user_email")
         private val KEY_LAST_SYNC_MS      = stringPreferencesKey("last_sync_ms")
+        private val KEY_LAST_BACKUP_MS    = stringPreferencesKey("last_backup_ms")
         private val KEY_REDONDEO_DECIMALES = intPreferencesKey("redondeo_decimales")
         private val KEY_REDONDEO_MODO      = stringPreferencesKey("redondeo_modo")
     }
@@ -65,6 +66,19 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun touchLastSync() {
         context.dataStore.edit { prefs ->
             prefs[KEY_LAST_SYNC_MS] = System.currentTimeMillis().toString()
+        }
+    }
+
+    // ── Timestamp de último backup ────────────────────────────────
+
+    /** Flow del último backup automático como milisegundos epoch. */
+    val lastBackupMs: Flow<Long?> = context.dataStore.data
+        .map { prefs -> prefs[KEY_LAST_BACKUP_MS]?.toLongOrNull() }
+
+    /** Actualiza el timestamp del último backup. */
+    suspend fun touchLastBackup() {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LAST_BACKUP_MS] = System.currentTimeMillis().toString()
         }
     }
 

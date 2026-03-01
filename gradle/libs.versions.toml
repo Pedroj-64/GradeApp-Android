@@ -15,7 +15,7 @@ googleid = "1.1.1"
 googleApiServicesSheets = "v4-rev20220927-2.0.0"
 googleApiClientAndroid = "2.7.0"
 workManager = "2.10.0"
-poi = "5.2.5"
+
 reorderable = "2.5.1"
 coroutines = "1.10.2"
 timber = "5.0.1"
@@ -68,8 +68,6 @@ androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx"
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version = "1.2.0" }
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version = "1.2.0" }
 
-# Apache POI (Excel export)
-apache-poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
 
 # Reorderable (drag & drop)
 reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }

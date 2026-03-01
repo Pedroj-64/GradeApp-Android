@@ -37,4 +37,7 @@ interface SubNotaDetailDao {
 
     @Query("UPDATE sub_nota_details SET valor = :valor WHERE id = :id")
     suspend fun updateValor(id: Long, valor: Float?)
+
+    @Query("SELECT * FROM sub_nota_details WHERE subNotaId = :subNotaId ORDER BY id ASC")
+    suspend fun getBySubNotaOnce(subNotaId: Long): List<SubNotaDetailEntity>
 }

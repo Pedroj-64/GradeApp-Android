@@ -13,6 +13,7 @@ import com.notasapp.ui.home.HomeScreen
 import com.notasapp.ui.materia.create.CreateMateriaWizard
 import com.notasapp.ui.materia.detail.MateriaDetailScreen
 import com.notasapp.ui.materia.edit.EditPorcentajesScreen
+import com.notasapp.ui.recomendaciones.RecomendacionesScreen
 import com.notasapp.ui.settings.SettingsScreen
 import com.notasapp.ui.stats.EstadisticasScreen
 
@@ -57,6 +58,9 @@ fun NotasNavGraph(
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToRecomendaciones = {
+                    navController.navigate(Screen.Recomendaciones.route)
                 }
             )
         }
@@ -142,6 +146,14 @@ fun NotasNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        // ── Recomendaciones ───────────────────────────────────────
+        composable(Screen.Recomendaciones.route) {
+            RecomendacionesScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         // ── Configuración ───────────────────────────────────────────
         composable(Screen.Settings.route) {
             SettingsScreen(

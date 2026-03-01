@@ -43,7 +43,10 @@ class SheetsService @Inject constructor(
 
     companion object {
         private const val APP_NAME = "Gradify"
-        private val SCOPES = listOf(SheetsScopes.SPREADSHEETS)
+        private val SCOPES = listOf(
+            SheetsScopes.SPREADSHEETS,
+            "https://www.googleapis.com/auth/drive.file"
+        )
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 1500L
     }
@@ -125,7 +128,12 @@ class SheetsService @Inject constructor(
                             .setTitle("${materia.nombre} – ${materia.periodo} | Gradify")
                     )
                 ).execute()
-                spreadsheet.spreadsheetId
+
+                val id = spreadsheet?.spreadsheetId
+                if (id.isNullOrBlank()) {
+                    throw IOException("Google Sheets no devolvió un ID válido al crear la hoja")
+                }
+                id
             }
         }
 

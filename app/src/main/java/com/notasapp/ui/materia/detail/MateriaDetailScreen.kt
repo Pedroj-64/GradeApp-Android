@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.detail
 
+import java.util.Locale
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Share
@@ -72,6 +74,13 @@ import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.launch
 
 /**
+ * Formatea un Float con punto decimal (invariant) para que sea parseable.
+ * Acepta tanto punto como coma al parsear.
+ */
+private fun Float.toInputString(): String = String.format(Locale.US, "%.1f", this)
+private fun String.parseGrade(): Float? = this.replace(',', '.').toFloatOrNull()
+
+/**
  * Pantalla de detalle de una materia.
  *
  * Muestra el gauge animado del promedio, componentes con sub-notas editables,
@@ -99,7 +108,9 @@ fun MateriaDetailScreen(
 
     // ── Bottom sheet de calculadora ───────────────────────────
     var showCalculadora by rememberSaveable { mutableStateOf(false) }
+    var showQuickEntry by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val quickEntrySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(error) {
@@ -125,6 +136,15 @@ fun MateriaDetailScreen(
                     }
                 },
                 actions = {
+                    // Quick entry: only show if there are pending grades
+                    if (materia?.componentes?.any { c ->
+                            c.subNotas.any { s -> !s.esCompuesta && s.valor == null }
+                        } == true
+                    ) {
+                        IconButton(onClick = { showQuickEntry = true }) {
+                            Icon(Icons.Default.FlashOn, contentDescription = "Entrada rápida")
+                        }
+                    }
                     IconButton(onClick = onEditPorcentajes) {
                         Icon(Icons.Default.Edit, contentDescription = "Editar porcentajes")
                     }
@@ -218,6 +238,24 @@ fun MateriaDetailScreen(
                     }
                 },
                 sheetState = sheetState
+            )
+        }
+    }
+
+    // ── Entrada rápida bottom sheet ──────────────────────────
+    if (showQuickEntry) {
+        materia?.let { mat ->
+            QuickEntryBottomSheet(
+                materia = mat,
+                onValueChange = { subNotaId, valor ->
+                    viewModel.actualizarSubNota(subNotaId, valor)
+                },
+                onDismiss = {
+                    scope.launch { quickEntrySheetState.hide() }.invokeOnCompletion {
+                        showQuickEntry = false
+                    }
+                },
+                sheetState = quickEntrySheetState
             )
         }
     }
@@ -340,6 +378,36 @@ private fun PromedioResumen(
             }
         }
 
+        // ── Mensaje motivacional según progreso ──────────────────
+        val mensajeMotivacional = getMensajeMotivacional(materia)
+        if (mensajeMotivacional != null) {
+            Spacer(Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = mensajeMotivacional.first,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = mensajeMotivacional.second,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+
         // ── Banner de felicitación ──────────────────────────────
         if (materia.yaAprobo && !materia.completa) {
             Spacer(Modifier.height(8.dp))
@@ -375,6 +443,72 @@ private fun PromedioResumen(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Devuelve un par (emoji, mensaje) motivacional según el progreso del estudiante.
+ * Null si no hay notas ingresadas aún.
+ */
+private fun getMensajeMotivacional(materia: Materia): Pair<String, String>? {
+    val pct = materia.porcentajeEvaluado
+
+    // Sin notas todavía
+    if (pct == 0f || materia.promedio == null) return null
+
+    // Ya completó todo
+    if (materia.completa) {
+        return if (materia.aprobado) {
+            "🏆" to "¡Completaste todas las evaluaciones y aprobaste! Excelente semestre."
+        } else {
+            "📋" to "Completaste todas las evaluaciones. Revisa las áreas donde puedes mejorar."
+        }
+    }
+
+    // Ya aprobó antes de terminar
+    if (materia.yaAprobo) return null // El banner de felicitación ya maneja esto
+
+    // Mensajes según porcentaje evaluado y rendimiento
+    val rendimiento = materia.promedio!! / materia.escalaMax // 0.0 – 1.0
+    val aprobacionRatio = materia.notaAprobacion / materia.escalaMax
+
+    return when {
+        // Primer corte (0-25%)
+        pct <= 0.25f -> when {
+            rendimiento >= aprobacionRatio * 1.2f ->
+                "🚀" to "¡Gran inicio! Arrancaste con todo. Mantén ese ritmo y el semestre será tuyo."
+            rendimiento >= aprobacionRatio ->
+                "💪" to "Buen comienzo, vas por buen camino. ¡Sigue así y cada vez será más fácil!"
+            else ->
+                "📚" to "Es solo el inicio, hay mucho camino por recorrer. ¡Cada nota cuenta, tú puedes!"
+        }
+        // Segundo corte (25-50%)
+        pct <= 0.50f -> when {
+            rendimiento >= aprobacionRatio * 1.2f ->
+                "⭐" to "¡Llevas un rendimiento excelente! Ya vas por la mitad, sigue destacándote."
+            rendimiento >= aprobacionRatio ->
+                "📈" to "Vas bien, ya pasaste la primera mitad. ¡Mantén el enfoque y lo lograrás!"
+            else ->
+                "🔥" to "Aún puedes remontar, queda bastante por evaluar. ¡Enfócate en lo que viene!"
+        }
+        // Tercer corte (50-75%)
+        pct <= 0.75f -> when {
+            rendimiento >= aprobacionRatio * 1.2f ->
+                "🌟" to "¡Vas volando! Más de la mitad evaluada y tu rendimiento es sobresaliente."
+            rendimiento >= aprobacionRatio ->
+                "✨" to "¡Ya se ve la meta! Mantén la concentración en la recta final."
+            else ->
+                "💡" to "Queda poco, pero cada punto cuenta. ¡Da lo mejor de ti en lo que resta!"
+        }
+        // Recta final (75-99%)
+        else -> when {
+            rendimiento >= aprobacionRatio * 1.2f ->
+                "🎯" to "¡Casi terminas y vas increíble! Un último empujón para cerrar con broche de oro."
+            rendimiento >= aprobacionRatio ->
+                "🏁" to "¡Ya casi llegas! Falta poco para terminar el semestre con éxito."
+            else ->
+                "⚡" to "El último tramo es clave. ¡Concéntrate y da todo, aún es posible!"
         }
     }
 }
@@ -504,7 +638,7 @@ private fun SubNotaRow(
     var expanded by remember(subNota.esCompuesta) { mutableStateOf(subNota.esCompuesta) }
     var mostrarDialogDetalle by remember { mutableStateOf(false) }
     var textValue by remember(subNota.valor) {
-        mutableStateOf(subNota.valor?.let { "%.1f".format(it) } ?: "")
+        mutableStateOf(subNota.valor?.toInputString() ?: "")
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -554,7 +688,7 @@ private fun SubNotaRow(
                     value = textValue,
                     onValueChange = { input ->
                         textValue = input
-                        val parsed = input.toFloatOrNull()
+                        val parsed = input.parseGrade()
                         if (parsed != null && parsed in 0f..escalaMax) {
                             onValueChange(parsed)
                         } else if (input.isEmpty()) {
@@ -664,7 +798,7 @@ private fun DetalleRow(
     modifier: Modifier = Modifier
 ) {
     var textValue by remember(detalle.valor) {
-        mutableStateOf(detalle.valor?.let { "%.1f".format(it) } ?: "")
+        mutableStateOf(detalle.valor?.toInputString() ?: "")
     }
 
     Row(
@@ -688,7 +822,7 @@ private fun DetalleRow(
             value = textValue,
             onValueChange = { input ->
                 textValue = input
-                val parsed = input.toFloatOrNull()
+                val parsed = input.parseGrade()
                 if (parsed != null && parsed in 0f..escalaMax) {
                     onValueChange(parsed)
                 } else if (input.isEmpty()) {
@@ -727,7 +861,7 @@ private fun AgregarDetalleDialog(
 ) {
     var descripcion by remember { mutableStateOf("") }
     var porcentajeText by remember { mutableStateOf("100") }
-    val pct = porcentajeText.toFloatOrNull()
+    val pct = porcentajeText.parseGrade()
     val valido = descripcion.isNotBlank() && pct != null && pct in 1f..100f
 
     AlertDialog(
@@ -768,6 +902,148 @@ private fun AgregarDetalleDialog(
     )
 }
 
+// ── Quick Entry Bottom Sheet ──────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuickEntryBottomSheet(
+    materia: Materia,
+    onValueChange: (subNotaId: Long, valor: Float?) -> Unit,
+    onDismiss: () -> Unit,
+    sheetState: androidx.compose.material3.SheetState
+) {
+    // Collect all simple (non-compound) sub-notas without a value
+    data class PendingEntry(
+        val componenteNombre: String,
+        val subNota: SubNota,
+        val escalaMax: Float
+    )
+
+    val pending = materia.componentes.flatMap { comp ->
+        comp.subNotas
+            .filter { !it.esCompuesta && it.valor == null }
+            .map { PendingEntry(comp.nombre, it, materia.escalaMax) }
+    }
+
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.FlashOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Entrada rápida",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "${pending.size} nota(s) pendiente(s)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(16.dp))
+
+            if (pending.isEmpty()) {
+                Text(
+                    text = "¡Todas las notas están ingresadas!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    items(pending, key = { it.subNota.id }) { entry ->
+                        QuickEntryRow(
+                            componenteNombre = entry.componenteNombre,
+                            subNota = entry.subNota,
+                            escalaMax = entry.escalaMax,
+                            onValueChange = { valor -> onValueChange(entry.subNota.id, valor) }
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun QuickEntryRow(
+    componenteNombre: String,
+    subNota: SubNota,
+    escalaMax: Float,
+    onValueChange: (Float?) -> Unit
+) {
+    var textValue by remember(subNota.valor) {
+        mutableStateOf(subNota.valor?.toInputString() ?: "")
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = subNota.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = componenteNombre,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            OutlinedTextField(
+                value = textValue,
+                onValueChange = { input ->
+                    textValue = input
+                    val parsed = input.parseGrade()
+                    if (parsed != null && parsed in 0f..escalaMax) {
+                        onValueChange(parsed)
+                    } else if (input.isEmpty()) {
+                        onValueChange(null)
+                    }
+                },
+                modifier = Modifier.width(90.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+                placeholder = {
+                    Text("0-${escalaMax.toInt()}", style = MaterialTheme.typography.bodySmall)
+                }
+            )
+        }
+    }
+}
+
+// ── Diálogos de creación ──────────────────────────────────────
+
 @Composable
 private fun AgregarSubNotaDialog(
     componenteNombre: String,
@@ -776,7 +1052,7 @@ private fun AgregarSubNotaDialog(
 ) {
     var descripcion by remember { mutableStateOf("") }
     var porcentajeText by remember { mutableStateOf("100") }
-    val pct = porcentajeText.toFloatOrNull()
+    val pct = porcentajeText.parseGrade()
     val valido = descripcion.isNotBlank() && pct != null && pct in 1f..100f
 
     AlertDialog(

@@ -1,6 +1,7 @@
 package com.notasapp.di
 
 import com.notasapp.utils.ExcelExporter
+import com.notasapp.utils.PdfExporter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,4 +21,8 @@ object UtilsModule {
     @Singleton
     @Provides
     fun provideExcelExporter(): ExcelExporter = ExcelExporter()
+
+    @Singleton
+    @Provides
+    fun providePdfExporter(): PdfExporter = PdfExporter()
 }

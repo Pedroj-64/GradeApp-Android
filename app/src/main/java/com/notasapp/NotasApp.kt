@@ -8,6 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.notasapp.data.worker.ReminderWorker
 import com.notasapp.data.worker.SheetsSyncWorker
+import com.notasapp.data.worker.AutoBackupWorker
 import com.notasapp.utils.NotificationHelper
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -35,6 +36,7 @@ class NotasApp : Application(), Configuration.Provider {
         notificationHelper.createNotificationChannels()
         scheduleSheetsSyncWorker()
         scheduleReminderWorker()
+        scheduleAutoBackupWorker()
     }
 
     /**
@@ -66,6 +68,16 @@ class NotasApp : Application(), Configuration.Provider {
             .build()
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             ReminderWorker.TAG,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    private fun scheduleAutoBackupWorker() {
+        val request = PeriodicWorkRequestBuilder<AutoBackupWorker>(1, TimeUnit.DAYS)
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            AutoBackupWorker.TAG,
             ExistingPeriodicWorkPolicy.KEEP,
             request
         )

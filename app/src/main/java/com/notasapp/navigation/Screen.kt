@@ -46,6 +46,9 @@ sealed class Screen(val route: String) {
     // ── Estadísticas del semestre ────────────────────────────────
     data object Estadisticas : Screen("estadisticas")
 
+    // ── Recomendaciones de estudio con IA ──────────────────────
+    data object Recomendaciones : Screen("recomendaciones")
+
     // ── Configuración global ────────────────────────────────────
     data object Settings : Screen("settings")
 }

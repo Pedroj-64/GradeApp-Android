@@ -120,6 +120,7 @@ fun CreateMateriaWizard(
                         onNombreChange = viewModel::updateNombre,
                         onPeriodoChange = viewModel::updatePeriodo,
                         onProfesorChange = viewModel::updateProfesor,
+                        onCreditosChange = viewModel::updateCreditos,
                         onNext = viewModel::goToStep2
                     )
                     2 -> Step2Escala(
@@ -151,6 +152,7 @@ private fun Step1BasicInfo(
     onNombreChange: (String) -> Unit,
     onPeriodoChange: (String) -> Unit,
     onProfesorChange: (String) -> Unit,
+    onCreditosChange: (Int) -> Unit,
     onNext: () -> Unit
 ) {
     Column(
@@ -200,6 +202,26 @@ private fun Step1BasicInfo(
             ),
             singleLine = true
         )
+
+        // ── Créditos ──
+        Text(
+            text = "Créditos: ${state.creditos}",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf(1, 2, 3, 4, 5, 6).forEach { c ->
+                FilterChip(
+                    selected = state.creditos == c,
+                    onClick = { onCreditosChange(c) },
+                    label = { Text("$c") }
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
