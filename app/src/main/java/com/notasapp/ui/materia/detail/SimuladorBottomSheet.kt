@@ -156,7 +156,7 @@ private fun SimuladorContent(
                             notasInputs[comp.id] = sanitized
                         }
                     },
-                    label = { Text("${comp.nombre} (${(comp.porcentaje * 100).toInt()}%)") },
+                    label = { Text("${comp.nombre} (${kotlin.math.round(comp.porcentaje * 100).toInt()}%)") },
                     placeholder = { Text("0 - ${"%.1f".format(escalaMax)}") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

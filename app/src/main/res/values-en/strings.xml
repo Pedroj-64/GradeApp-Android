@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">Gradify</string>
+
+    <!-- Authentication -->
+    <string name="login_title">Sign In</string>
+    <string name="login_google_button">Sign in with Google</string>
+    <string name="login_subtitle">Manage your academic grades intelligently</string>
+    <string name="login_privacy_note">Your data is stored locally. Google Sheets sync is optional.</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_stats">Statistics</string>
+    <string name="nav_resources">Resources</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="home_title">My Subjects</string>
+    <string name="home_empty">No subjects yet</string>
+    <string name="home_empty_hint">Tap the + button to add your first subject</string>
+    <string name="home_fab_add">New subject</string>
+    <string name="home_delete_title">Delete subject?</string>
+    <string name="home_delete_message">All components and grades for this subject will be permanently deleted.</string>
+    <string name="home_search">Search</string>
+    <string name="home_sort">Sort</string>
+    <string name="home_clear">Clear</string>
+    <string name="home_filter_all">All</string>
+    <string name="home_no_results">No subjects found</string>
+    <string name="home_summary">Academic Summary</string>
+    <string name="home_average">Average</string>
+    <string name="home_subjects">Subjects</string>
+    <string name="home_at_risk">At risk</string>
+    <string name="home_status_approved">PASSED</string>
+    <string name="home_status_passing">PASSING</string>
+    <string name="home_status_at_risk">AT RISK</string>
+    <string name="home_not_evaluated">Not evaluated</string>
+    <string name="home_evaluated_pct">%1$d%% evaluated</string>
+    <string name="home_welcome">Welcome to Gradify!</string>
+    <string name="home_welcome_hint">Here you\'ll see the average of all your subjects. Start by adding the first one!</string>
+    <string name="home_add_first">Add first subject</string>
+    <string name="home_search_placeholder">Search subject…</string>
+
+    <!-- Create Subject -->
+    <string name="create_materia_title">New Subject</string>
+    <string name="create_materia_step_format">Step %1$d/3</string>
+    <string name="campo_nombre">Subject name *</string>
+    <string name="campo_periodo">Semester / Term *</string>
+    <string name="campo_profesor">Professor (optional)</string>
+    <string name="btn_siguiente">Next</string>
+    <string name="btn_guardar_materia">Save subject</string>
+    <string name="btn_agregar_componente">Add component</string>
+    <string name="wizard_step1_title">Basic information</string>
+    <string name="wizard_step2_title">Grading scale</string>
+    <string name="wizard_step3_title">Evaluation components</string>
+    <string name="wizard_step3_hint">Define the terms or midterms with their weight in the final grade.</string>
+    <string name="wizard_component_name">Name</string>
+    <string name="wizard_delete_component">Delete component</string>
+    <string name="wizard_must_be_100">(must be 100%%)</string>
+
+    <!-- Validations -->
+    <string name="error_nombre_obligatorio">Subject name is required</string>
+    <string name="error_porcentajes">Percentages must add up to 100%</string>
+    <string name="error_nota_invalida">Grade must be between 0 and %1$.1f</string>
+
+    <!-- Subject Detail -->
+    <string name="promedio_actual">Current average</string>
+    <string name="estado_aprobado">PASSING</string>
+    <string name="estado_en_riesgo">AT RISK</string>
+    <string name="nota_minima">Min: %1$.1f</string>
+    <string name="aporte_label">Weight: %1$.2f</string>
+    <string name="detail_quick_entry">Quick entry</string>
+    <string name="detail_study_resources">Study resources</string>
+    <string name="detail_edit_percentages">Edit percentages</string>
+    <string name="detail_export">Export</string>
+    <string name="detail_what_grade_needed">What grade do I need?</string>
+    <string name="detail_evaluations">Evaluations</string>
+    <string name="detail_accumulated">Accumulated</string>
+    <string name="detail_add_grade">Add grade</string>
+    <string name="detail_collapse">Collapse details</string>
+    <string name="detail_expand">View details</string>
+    <string name="detail_delete_grade">Delete grade</string>
+    <string name="detail_add_element">Add element</string>
+    <string name="detail_description">Description</string>
+    <string name="detail_add">Add</string>
+
+    <!-- Edit Percentages -->
+    <string name="edit_pct_title">Edit percentages</string>
+    <string name="edit_pct_reorder">Reorder</string>
+    <string name="edit_pct_drag_hint">Hold the ≡ to reorder</string>
+    <string name="edit_pct_save">Save changes</string>
+
+    <!-- Export -->
+    <string name="export_title">Export / Sync</string>
+    <string name="export_excel_btn">Export to Excel (.xlsx)</string>
+    <string name="export_sheets_btn">Sync with Google Sheets</string>
+    <string name="export_excel_hint">Download the file to your device storage</string>
+    <string name="export_sheets_hint">Create or update a spreadsheet on your Google Drive</string>
+    <string name="export_success">Excel file saved successfully</string>
+    <string name="export_how">How would you like to export\nyour grades?</string>
+    <string name="export_excel_title">Excel File (.xlsx)</string>
+    <string name="export_excel_desc">Choose a folder to save the file</string>
+    <string name="export_save_excel">Save as Excel</string>
+    <string name="export_resave">Save again</string>
+    <string name="export_saved_ok">File saved successfully to the chosen location!</string>
+    <string name="export_pdf_title">PDF Summary</string>
+    <string name="export_pdf_desc">Generate a PDF with a complete summary of your grades</string>
+    <string name="export_save_pdf">Save as PDF</string>
+    <string name="export_drive_title">Google Drive</string>
+    <string name="export_drive_desc">Save an Excel with your grades to Google Drive. Select Drive in the location picker.</string>
+    <string name="export_grant_access">Grant Drive access</string>
+    <string name="export_save_drive">Save to Google Drive</string>
+    <string name="export_open_drive">Open in Google Drive</string>
+    <string name="export_copy_link">Copy link</string>
+    <string name="export_share_link">Share link</string>
+    <string name="export_completed">Completed</string>
+    <string name="export_my_notes">My grades on Google Drive</string>
+    <string name="export_file_saved">✓ File saved successfully!</string>
+
+    <!-- General errors -->
+    <string name="error_generic">An unexpected error occurred. Please try again.</string>
+    <string name="error_no_internet">No internet connection. Operating offline.</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Calendar</string>
+    <string name="calendar_add_event">Add event</string>
+    <string name="calendar_new_event">New event</string>
+    <string name="calendar_edit_event">Edit event</string>
+    <string name="calendar_event_title_hint">Event title</string>
+    <string name="calendar_event_title_placeholder">E.g.: Midterm 1 Calculus</string>
+    <string name="calendar_event_type">Type</string>
+    <string name="calendar_event_materia">Subject</string>
+    <string name="calendar_select_materia">Select a subject</string>
+    <string name="calendar_event_reminder">Reminder</string>
+    <string name="calendar_description_label">Description (optional)</string>
+    <string name="calendar_description_placeholder">Topics, location, notes…</string>
+    <string name="calendar_no_reminder">No reminder</string>
+    <string name="calendar_15min">15 minutes before</string>
+    <string name="calendar_30min">30 minutes before</string>
+    <string name="calendar_1h">1 hour before</string>
+    <string name="calendar_2h">2 hours before</string>
+    <string name="calendar_1d">1 day before</string>
+    <string name="calendar_2d">2 days before</string>
+    <string name="calendar_save">Create</string>
+    <string name="calendar_update">Save</string>
+    <string name="calendar_cancel">Cancel</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_prev_day">- 1 day</string>
+    <string name="calendar_next_day">+ 1 day</string>
+    <string name="calendar_hour_label">Time:</string>
+    <string name="calendar_event_saved">Event created</string>
+    <string name="calendar_event_updated">Event updated</string>
+    <string name="calendar_event_deleted">Event deleted</string>
+    <string name="calendar_no_events">No events for this day</string>
+    <string name="calendar_add_event_day">Add event</string>
+    <string name="calendar_prev_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_go_today">Go to today</string>
+    <string name="calendar_delete_title">Delete event</string>
+    <string name="calendar_delete_confirm">Delete this event? This action cannot be undone.</string>
+    <string name="calendar_edit">Edit</string>
+    <string name="calendar_1h_plus">+1h</string>
+    <string name="calendar_import_gcal">Import Google Calendar</string>
+    <string name="calendar_day_mon">Mon</string>
+    <string name="calendar_day_tue">Tue</string>
+    <string name="calendar_day_wed">Wed</string>
+    <string name="calendar_day_thu">Thu</string>
+    <string name="calendar_day_fri">Fri</string>
+    <string name="calendar_day_sat">Sat</string>
+    <string name="calendar_day_sun">Sun</string>
+
+    <!-- Google Calendar -->
+    <string name="gcal_import_title">Import Google Calendar</string>
+    <string name="gcal_import_description">Import events from the next 90 days of your Google Calendar.</string>
+    <string name="gcal_import_select_materia">Select the subject to associate them with:</string>
+    <string name="gcal_import_button">Import</string>
+    <string name="gcal_import_success">%1$d events imported from Google Calendar</string>
+    <string name="gcal_import_login_required">You must sign in to import from Google Calendar</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_data_backup">Data &amp; Backup</string>
+    <string name="settings_export_backup">Export backup</string>
+    <string name="settings_restore_backup">Restore backup</string>
+    <string name="settings_notes_rounding">Grades &amp; Rounding</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_logout">Sign out</string>
+    <string name="settings_logout_confirm">Are you sure you want to sign out? Your grades will remain stored locally.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System language</string>
+    <string name="settings_language_es">Español</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_export_subtitle">Save all your grades in a JSON file</string>
+    <string name="settings_export_cta">Export</string>
+    <string name="settings_restore_subtitle">Import grades from a previously exported .json file</string>
+    <string name="settings_select_file">Select file</string>
+    <string name="settings_rounding_title">Grade rounding</string>
+    <string name="settings_decimals">Decimal places</string>
+    <string name="settings_rounding_mode">Rounding mode</string>
+    <string name="settings_back_to_login">Return to the sign-in screen</string>
+    <string name="settings_exit">Exit</string>
+    <string name="settings_share_backup">Share backup</string>
+    <string name="settings_app_description">Manage your academic grades intelligently. Made with ❤️ for students.</string>
+
+    <!-- AI Recommendations -->
+    <string name="recommendations_title">Recommendations</string>
+    <string name="recommendations_select_materia">Select a subject</string>
+    <string name="recommendations_loading">Generating recommendations…</string>
+    <string name="recommendations_retry">Retry</string>
+    <string name="recommendations_api_key_missing">Configure your Gemini API key</string>
+    <string name="recs_title">AI Resources</string>
+    <string name="recs_subtitle">Generated with Gemini</string>
+    <string name="recs_video">Video</string>
+    <string name="recs_book">Book</string>
+    <string name="recs_web">Web</string>
+    <string name="recs_videos">Videos</string>
+    <string name="recs_books">Books</string>
+    <string name="recs_web_resources">Web resources</string>
+    <string name="recs_regenerate">Regenerate recommendations</string>
+    <string name="recs_subject_label">SUBJECT</string>
+    <string name="recs_open">Open</string>
+    <string name="recs_error">Generation error</string>
+    <string name="recs_key_needed">Gemini key required</string>
+    <string name="recs_will_generate">Gemini will generate personalized resources for you</string>
+    <string name="recs_no_subjects">No subjects yet</string>
+    <string name="recs_no_subjects_hint">Add your first subject and come back here for personalized recommendations</string>
+
+    <!-- Simulator -->
+    <string name="sim_what_if">What if I score…?</string>
+    <string name="sim_hint">Enter hypothetical grades for pending components</string>
+    <string name="sim_all_graded">All components already have grades.</string>
+    <string name="sim_simulate">Simulate</string>
+    <string name="sim_pass">You would pass with these grades! 🎉</string>
+    <string name="sim_fail">You wouldn\'t reach the minimum with these grades…</string>
+
+    <!-- Calculator -->
+    <string name="calc_enter_target">Enter the final grade you want to achieve</string>
+    <string name="calc_calculate">Calculate</string>
+    <string name="calc_goal_reached">Goal already reached!</string>
+    <string name="calc_unreachable">Goal unreachable</string>
+    <string name="calc_error">Could not calculate</string>
+    <string name="calc_invalid_grade">Enter a valid grade</string>
+
+    <!-- Permissions -->
+    <string name="perm_notifications_title">Notifications</string>
+    <string name="perm_storage_title">Storage</string>
+    <string name="perm_needed">Permission required</string>
+    <string name="perm_allow">Allow</string>
+    <string name="perm_later">Not now</string>
+
+    <!-- Onboarding -->
+    <string name="onboard_welcome">Welcome to Gradify</string>
+    <string name="onboard_welcome_desc">Your academic companion to manage subjects, grades and evaluations in one place.</string>
+    <string name="onboard_welcome_highlight">Register your subjects, components and grades easily and intuitively.</string>
+    <string name="onboard_stats">Smart statistics</string>
+    <string name="onboard_stats_desc">Visualize your performance with clear charts and detailed analysis of each subject.</string>
+    <string name="onboard_stats_highlight">Get personalized study recommendations with artificial intelligence.</string>
+    <string name="onboard_calendar">Exam calendar</string>
+    <string name="onboard_calendar_desc">Schedule your evaluations and receive automatic reminders.</string>
+    <string name="onboard_calendar_highlight">Never forget an important date in your semester again.</string>
+    <string name="onboard_backup">Secure backup</string>
+    <string name="onboard_backup_desc">Export your grades to Excel or PDF and sync with Google Drive.</string>
+    <string name="onboard_backup_highlight">Your data always protected and available on any device.</string>
+    <string name="onboard_skip">Skip</string>
+    <string name="onboard_prev">Previous</string>
+    <string name="onboard_next">Next</string>
+    <string name="onboard_start">Get started!</string>
+
+    <!-- Statistics -->
+    <string name="stats_title">Semester statistics</string>
+    <string name="stats_back">Back</string>
+    <string name="stats_best">Best performance</string>
+    <string name="stats_needs_attention">Needs attention</string>
+    <string name="stats_general_avg">Overall average</string>
+    <string name="stats_no_grades">No grades</string>
+    <string name="stats_subject_status">Subject status</string>
+    <string name="stats_passing">Passing</string>
+    <string name="stats_at_risk">At risk</string>
+    <string name="stats_failing">Failing</string>
+    <string name="stats_performance">Performance by subject</string>
+    <string name="stats_evolution">Semester evolution</string>
+    <string name="stats_history">Semester history</string>
+    <string name="stats_empty">No statistics</string>
+    <string name="stats_empty_hint">Add subjects and start entering grades to see your statistics</string>
+
+    <!-- General deletion -->
+    <string name="delete_subject">Delete subject</string>
+
+    <!-- General -->
+    <string name="btn_back">Back</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_close">Close</string>
+
+</resources>

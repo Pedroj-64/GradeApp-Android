@@ -1,9 +1,12 @@
 package com.notasapp.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.widget.RemoteViews
+import com.notasapp.MainActivity
 import com.notasapp.R
 import com.notasapp.data.mapper.toDomain
 import com.notasapp.di.WidgetEntryPoint
@@ -82,6 +85,16 @@ class PromedioWidgetProvider : AppWidgetProvider() {
                     val views = RemoteViews(context.packageName, R.layout.widget_promedio)
                     views.setTextViewText(R.id.tv_widget_promedio, promedioText)
                     views.setTextViewText(R.id.tv_widget_materias, subtitleText)
+
+                    // Click en el widget abre la app
+                    val launchIntent = Intent(context, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                    val pendingIntent = PendingIntent.getActivity(
+                        context, 0, launchIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    views.setOnClickPendingIntent(R.id.widget_promedio_root, pendingIntent)
 
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                     Timber.d("Widget actualizado: promedio=$promedioText")

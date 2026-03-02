@@ -282,7 +282,7 @@ class ExcelExporter @Inject constructor() {
 
         // ── Info: acumulado y estado ──────────────────────────────────
         setStr(rowIndex, 0, "Acumulado: ${materia.acumuladoDisplay}", S_ITALIC)
-        val evaluado = (materia.porcentajeEvaluado * 100).toInt()
+        val evaluado = kotlin.math.round(materia.porcentajeEvaluado * 100).toInt()
         setStr(rowIndex, 2, "Evaluado: $evaluado%", S_ITALIC)
         val estado = if (materia.yaAprobo) "¡APROBADO!" else "EN PROGRESO"
         setStr(rowIndex, 4, estado, if (materia.yaAprobo) S_GREEN else S_RED)

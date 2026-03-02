@@ -1,7 +1,9 @@
 package com.notasapp.ui.recomendaciones
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.notasapp.data.local.cache.RecomendacionesCache
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.remote.ai.GeminiService
 import com.notasapp.data.remote.ai.Recomendacion
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -40,10 +43,16 @@ data class RecomendacionesUiState(
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class RecomendacionesViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val materiaRepository: MateriaRepository,
     private val usuarioDao: UsuarioDao,
-    private val geminiService: GeminiService
+    private val geminiService: GeminiService,
+    private val recomendacionesCache: RecomendacionesCache
 ) : ViewModel() {
+
+    /** materiaId opcional inyectado desde la ruta de navegación. */
+    private val preSelectId: Long? =
+        savedStateHandle.get<Long>("materiaId")?.takeIf { it > 0 }
 
     private val _uiState = MutableStateFlow(RecomendacionesUiState())
     val uiState: StateFlow<RecomendacionesUiState> = _uiState.asStateFlow()
@@ -61,11 +70,22 @@ class RecomendacionesViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    // Cache de recomendaciones por materiaId para no repetir llamadas
-    private val cache = mutableMapOf<Long, List<Recomendacion>>()
+    // Cache en memoria complementario al cache persistente
+    private val memoryCache = mutableMapOf<Long, List<Recomendacion>>()
+
+    init {
+        // Si llegamos desde MateriaDetailScreen con un ID concreto, auto-seleccionar
+        if (preSelectId != null) {
+            viewModelScope.launch {
+                val materia = materias.first { it.isNotEmpty() }.find { it.id == preSelectId }
+                materia?.let { seleccionarMateria(it) }
+            }
+        }
+    }
 
     /**
      * Selecciona una materia y genera recomendaciones para ella.
+     * Usa cache persistente: solo llama a la IA si las notas cambiaron.
      */
     fun seleccionarMateria(materia: Materia) {
         _uiState.update {
@@ -77,34 +97,81 @@ class RecomendacionesViewModel @Inject constructor(
             )
         }
 
-        // Verificar si ya tenemos recomendaciones en cache
-        cache[materia.id]?.let { cached ->
+        // 1. Cache en memoria (más rápido)
+        memoryCache[materia.id]?.takeIf { it.isNotEmpty() }?.let { cached ->
             _uiState.update { it.copy(recomendaciones = cached) }
             return
         }
 
-        generarRecomendaciones(materia)
+        // 2. Cache persistente con fingerprint de notas
+        val componentesInfo = materia.componentes.map { it.nombre to it.promedio }
+        val fingerprint = recomendacionesCache.buildFingerprint(
+            materiaId = materia.id,
+            promedio = materia.promedio,
+            porcentajeEvaluado = materia.porcentajeEvaluado,
+            componentesInfo = componentesInfo.ifEmpty { null }
+        )
+
+        val cachedJson = recomendacionesCache.get(materia.id, fingerprint)
+        if (cachedJson != null) {
+            try {
+                val recs = recomendacionesCache.deserializeRecomendaciones(cachedJson)
+                if (recs.isNotEmpty()) {
+                    memoryCache[materia.id] = recs
+                    _uiState.update { it.copy(recomendaciones = recs) }
+                    Timber.i("Recomendaciones cargadas de cache persistente (materia ${materia.id})")
+                    return
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Error deserializando cache persistente")
+            }
+        }
+
+        // 3. Llamar a la IA
+        generarRecomendaciones(materia, fingerprint)
     }
 
     /**
-     * Reintenta la generación de recomendaciones.
+     * Reintenta la generación de recomendaciones, forzando una nueva llamada a la API.
      */
     fun reintentar() {
         _uiState.value.materiaSeleccionada?.let { materia ->
-            generarRecomendaciones(materia)
+            memoryCache.remove(materia.id)
+            recomendacionesCache.invalidate(materia.id)
+            _uiState.update { it.copy(recomendaciones = emptyList(), error = null) }
+            val componentesInfo = materia.componentes.map { it.nombre to it.promedio }
+            val fingerprint = recomendacionesCache.buildFingerprint(
+                materia.id, materia.promedio, materia.porcentajeEvaluado,
+                componentesInfo.ifEmpty { null }
+            )
+            generarRecomendaciones(materia, fingerprint)
         }
     }
 
-    private fun generarRecomendaciones(materia: Materia) {
+    private fun generarRecomendaciones(materia: Materia, fingerprint: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, apiKeyFaltante = false) }
 
+            val componentesInfo = materia.componentes.map { comp ->
+                comp.nombre to comp.promedio
+            }
+
             geminiService.generarRecomendaciones(
                 nombreMateria = materia.nombre,
-                periodo = materia.periodo
+                periodo = materia.periodo,
+                componentesInfo = componentesInfo.ifEmpty { null },
+                promedio = materia.promedio,
+                porcentajeEvaluado = materia.porcentajeEvaluado,
+                notaAprobacion = materia.notaAprobacion,
+                aprobado = materia.aprobado
             ).fold(
                 onSuccess = { recomendaciones ->
-                    cache[materia.id] = recomendaciones
+                    if (recomendaciones.isNotEmpty()) {
+                        memoryCache[materia.id] = recomendaciones
+                        // Persistir con fingerprint para futuros lanzamientos
+                        val json = recomendacionesCache.serializeRecomendaciones(recomendaciones)
+                        recomendacionesCache.put(materia.id, fingerprint, json)
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -116,11 +183,14 @@ class RecomendacionesViewModel @Inject constructor(
                     Timber.e(error, "Error generando recomendaciones")
                     val isApiKeyMissing = error is IllegalStateException &&
                             error.message?.contains("GEMINI_API_KEY") == true
+                    val rawMsg = buildString {
+                        append("[${error.javaClass.simpleName}] ${error.message}")
+                        error.cause?.let { append(" | cause: [${it.javaClass.simpleName}] ${it.message}") }
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = if (isApiKeyMissing) null else
-                                "No se pudieron generar recomendaciones: ${error.localizedMessage ?: error.javaClass.simpleName}",
+                            error = if (isApiKeyMissing) null else rawMsg,
                             apiKeyFaltante = isApiKeyMissing
                         )
                     }

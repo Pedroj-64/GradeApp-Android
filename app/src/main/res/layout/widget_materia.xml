@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget individual: Una materia con nota y progreso -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_materia_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_materia_background"
+    android:padding="14dp">
+
+    <!-- Nombre de la materia -->
+    <TextView
+        android:id="@+id/tv_materia_nombre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Materia"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Nota grande -->
+    <TextView
+        android:id="@+id/tv_materia_nota"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        android:layout_marginTop="4dp" />
+
+    <!-- Estado -->
+    <TextView
+        android:id="@+id/tv_materia_estado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sin evaluar"
+        android:textSize="11sp"
+        android:textColor="#FFFFFFFF"
+        android:alpha="0.85"
+        android:layout_marginTop="2dp" />
+
+    <!-- Progreso -->
+    <ProgressBar
+        android:id="@+id/pb_materia_progreso"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        android:progress="0"
+        android:progressDrawable="@drawable/widget_progress_bar" />
+
+    <TextView
+        android:id="@+id/tv_materia_progreso_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="0% evaluado"
+        android:textSize="9sp"
+        android:textColor="#FFFFFFFF"
+        android:alpha="0.7"
+        android:layout_marginTop="2dp" />
+
+</LinearLayout>

@@ -1,6 +1,8 @@
 package com.notasapp.di
 
+import com.notasapp.data.repository.CalendarRepositoryImpl
 import com.notasapp.data.repository.MateriaRepositoryImpl
+import com.notasapp.domain.repository.CalendarRepository
 import com.notasapp.domain.repository.MateriaRepository
 import dagger.Binds
 import dagger.Module
@@ -27,4 +29,13 @@ abstract class RepositoryModule {
     abstract fun bindMateriaRepository(
         impl: MateriaRepositoryImpl
     ): MateriaRepository
+
+    /**
+     * Vincula [CalendarRepository] → [CalendarRepositoryImpl].
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCalendarRepository(
+        impl: CalendarRepositoryImpl
+    ): CalendarRepository
 }

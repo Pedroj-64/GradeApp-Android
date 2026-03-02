@@ -51,7 +51,7 @@ data class Componente(
     /**
      * Porcentaje (0–100) del componente expresado en entero, para la UI.
      */
-    val porcentajeDisplay: Int get() = (porcentaje * 100).toInt()
+    val porcentajeDisplay: Int get() = kotlin.math.round(porcentaje * 100).toInt()
 
     /**
      * Porcentaje de sub-notas ya ingresadas dentro de este componente (0.0 – 1.0).

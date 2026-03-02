@@ -17,6 +17,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -331,45 +333,60 @@ private fun Step3Componentes(
 
         // Lista de componentes
         state.componentes.forEachIndexed { index, componente ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = componente.nombre,
-                        onValueChange = { onNombreChange(index, it) },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    if (state.componentes.size > 1) {
-                        IconButton(onClick = { onRemoveComponente(index) }) {
-                            Icon(
-                                Icons.Default.DeleteOutline,
-                                contentDescription = "Eliminar componente",
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = componente.nombre,
+                            onValueChange = { onNombreChange(index, it) },
+                            label = { Text("Nombre") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        if (state.componentes.size > 1) {
+                            IconButton(onClick = { onRemoveComponente(index) }) {
+                                Icon(
+                                    Icons.Default.DeleteOutline,
+                                    contentDescription = "Eliminar componente",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
-                }
 
-                Text(
-                    text = "${componente.porcentajeDisplay}%",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                Slider(
-                    value = componente.porcentaje,
-                    onValueChange = { onPorcentajeChange(index, it) },
-                    valueRange = 0f..1f,
-                    steps = 19
-                )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Slider(
+                            value = componente.porcentaje,
+                            onValueChange = { onPorcentajeChange(index, it) },
+                            valueRange = 0f..1f,
+                            steps = 99,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${componente.porcentajeDisplay}%",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -380,7 +397,7 @@ private fun Step3Componentes(
             MaterialTheme.colorScheme.error
 
         Text(
-            text = "Total: ${(state.sumaPorcentajes * 100).toInt()}% ${if (state.porcentajesValidos) "✓" else "(debe ser 100%)"}",
+            text = "Total: ${kotlin.math.round(state.sumaPorcentajes * 100).toInt()}% ${if (state.porcentajesValidos) "✓" else "(debe ser 100%)"}",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = totalColor

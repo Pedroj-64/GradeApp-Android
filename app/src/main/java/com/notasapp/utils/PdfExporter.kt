@@ -285,7 +285,7 @@ class PdfExporter @Inject constructor() {
             for (comp in materia.componentes) {
                 // Fila componente
                 canvas.drawText(comp.nombre, colX[0], y + LINE_HEIGHT, paintBodyBold)
-                canvas.drawText("${(comp.porcentaje * 100).toInt()}%", colX[1], y + LINE_HEIGHT, paintBody)
+                canvas.drawText("${kotlin.math.round(comp.porcentaje * 100).toInt()}%", colX[1], y + LINE_HEIGHT, paintBody)
                 y += LINE_HEIGHT + 2f
 
                 for (sub in comp.subNotas) {
@@ -312,7 +312,7 @@ class PdfExporter @Inject constructor() {
                                 colX[2], y + LINE_HEIGHT, paintSubtitle
                             )
                             canvas.drawText(
-                                "${(det.porcentaje * 100).toInt()}%",
+                                "${kotlin.math.round(det.porcentaje * 100).toInt()}%",
                                 colX[1], y + LINE_HEIGHT, paintSubtitle
                             )
                             canvas.drawText(detVal, colX[3], y + LINE_HEIGHT, paintSubtitle)

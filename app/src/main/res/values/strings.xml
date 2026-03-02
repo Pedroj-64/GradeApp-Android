@@ -15,11 +15,38 @@
          El BuildConfig.GOOGLE_CLIENT_ID se lee desde local.properties.
     -->
 
+    <!-- Navegación inferior -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_stats">Estadísticas</string>
+    <string name="nav_resources">Recursos</string>
+    <string name="nav_calendar">Calendario</string>
+    <string name="nav_settings">Ajustes</string>
+
     <!-- Home -->
     <string name="home_title">Mis Materias</string>
     <string name="home_empty">Aún no tienes materias</string>
     <string name="home_empty_hint">Toca el botón + para agregar tu primera materia</string>
     <string name="home_fab_add">Nueva materia</string>
+    <string name="home_delete_title">¿Eliminar materia?</string>
+    <string name="home_delete_message">Se eliminarán permanentemente todos los componentes y notas de esta materia.</string>
+    <string name="home_search">Buscar</string>
+    <string name="home_sort">Ordenar</string>
+    <string name="home_clear">Limpiar</string>
+    <string name="home_filter_all">Todos</string>
+    <string name="home_no_results">No se encontraron materias</string>
+    <string name="home_summary">Resumen Académico</string>
+    <string name="home_average">Promedio</string>
+    <string name="home_subjects">Materias</string>
+    <string name="home_at_risk">En riesgo</string>
+    <string name="home_status_approved">APROBADA</string>
+    <string name="home_status_passing">APROBANDO</string>
+    <string name="home_status_at_risk">EN RIESGO</string>
+    <string name="home_not_evaluated">Sin evaluar</string>
+    <string name="home_evaluated_pct">%1$d%% evaluado</string>
+    <string name="home_welcome">¡Bienvenido a Gradify!</string>
+    <string name="home_welcome_hint">Aquí verás el promedio de todas tus materias. ¡Empieza agregando la primera!</string>
+    <string name="home_add_first">Agregar primera materia</string>
+    <string name="home_search_placeholder">Buscar materia…</string>
 
     <!-- Crear Materia -->
     <string name="create_materia_title">Nueva Materia</string>
@@ -30,6 +57,13 @@
     <string name="btn_siguiente">Siguiente</string>
     <string name="btn_guardar_materia">Guardar materia</string>
     <string name="btn_agregar_componente">Agregar componente</string>
+    <string name="wizard_step1_title">Información básica</string>
+    <string name="wizard_step2_title">Escala de calificación</string>
+    <string name="wizard_step3_title">Componentes de evaluación</string>
+    <string name="wizard_step3_hint">Define los cortes o parciales con su peso en la nota final.</string>
+    <string name="wizard_component_name">Nombre</string>
+    <string name="wizard_delete_component">Eliminar componente</string>
+    <string name="wizard_must_be_100">(debe ser 100%%)</string>
 
     <!-- Validaciones -->
     <string name="error_nombre_obligatorio">El nombre de la materia es obligatorio</string>
@@ -42,6 +76,26 @@
     <string name="estado_en_riesgo">EN RIESGO</string>
     <string name="nota_minima">Min: %1$.1f</string>
     <string name="aporte_label">Aporte: %1$.2f</string>
+    <string name="detail_quick_entry">Entrada rápida</string>
+    <string name="detail_study_resources">Recursos de estudio</string>
+    <string name="detail_edit_percentages">Editar porcentajes</string>
+    <string name="detail_export">Exportar</string>
+    <string name="detail_what_grade_needed">¿Qué nota necesito?</string>
+    <string name="detail_evaluations">Evaluaciones</string>
+    <string name="detail_accumulated">Acumulado</string>
+    <string name="detail_add_grade">Agregar nota</string>
+    <string name="detail_collapse">Contraer detalles</string>
+    <string name="detail_expand">Ver detalles</string>
+    <string name="detail_delete_grade">Eliminar nota</string>
+    <string name="detail_add_element">Agregar elemento</string>
+    <string name="detail_description">Descripción</string>
+    <string name="detail_add">Agregar</string>
+
+    <!-- Editar porcentajes -->
+    <string name="edit_pct_title">Editar porcentajes</string>
+    <string name="edit_pct_reorder">Reordenar</string>
+    <string name="edit_pct_drag_hint">Mantén pulsado el ≡ para reordenar</string>
+    <string name="edit_pct_save">Guardar cambios</string>
 
     <!-- Exportación -->
     <string name="export_title">Exportar / Sincronizar</string>
@@ -50,11 +104,208 @@
     <string name="export_excel_hint">Descarga el archivo al almacenamiento de tu dispositivo</string>
     <string name="export_sheets_hint">Crea o actualiza una hoja de cálculo en tu Google Drive</string>
     <string name="export_success">Archivo Excel guardado correctamente</string>
+    <string name="export_how">¿Cómo deseas exportar\ntus notas?</string>
+    <string name="export_excel_title">Archivo Excel (.xlsx)</string>
+    <string name="export_excel_desc">Elige la carpeta donde guardar el archivo</string>
+    <string name="export_save_excel">Guardar como Excel</string>
+    <string name="export_resave">Guardar de nuevo</string>
+    <string name="export_saved_ok">¡Archivo guardado exitosamente en la ubicación elegida!</string>
+    <string name="export_pdf_title">Resumen PDF</string>
+    <string name="export_pdf_desc">Genera un PDF con el resumen completo de tus notas</string>
+    <string name="export_save_pdf">Guardar como PDF</string>
+    <string name="export_drive_title">Google Drive</string>
+    <string name="export_drive_desc">Guarda un Excel con tus notas en Google Drive. Selecciona Drive en el selector de ubicación.</string>
+    <string name="export_grant_access">Conceder acceso a Drive</string>
+    <string name="export_save_drive">Guardar en Google Drive</string>
+    <string name="export_open_drive">Abrir en Google Drive</string>
+    <string name="export_copy_link">Copiar enlace</string>
+    <string name="export_share_link">Compartir enlace</string>
+    <string name="export_completed">Completado</string>
+    <string name="export_my_notes">Mis notas en Google Drive</string>
+    <string name="export_file_saved">✓ ¡Archivo guardado correctamente!</string>
 
     <!-- Errores generales -->
     <string name="error_generic">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
     <string name="error_no_internet">Sin conexión a internet. Operando en modo offline.</string>
-    <!-- Widget -->
+
+    <!-- Widgets -->
     <string name="widget_description" translatable="false">Muestra el promedio del semestre en tu pantalla de inicio</string>
+    <string name="widget_materia_description" translatable="false">Muestra la materia destacada con nota y progreso</string>
+    <string name="widget_resumen_description" translatable="false">Panel completo del semestre: promedio, materias, progreso y motivación</string>
+
+    <!-- Calendario -->
+    <string name="calendar_title">Calendario</string>
+    <string name="calendar_add_event">Agregar evento</string>
+    <string name="calendar_new_event">Nuevo evento</string>
+    <string name="calendar_edit_event">Editar evento</string>
+    <string name="calendar_event_title_hint">Título del evento</string>
+    <string name="calendar_event_title_placeholder">Ej: Parcial 1 de Cálculo</string>
+    <string name="calendar_event_type">Tipo</string>
+    <string name="calendar_event_materia">Materia</string>
+    <string name="calendar_select_materia">Selecciona una materia</string>
+    <string name="calendar_event_reminder">Recordatorio</string>
+    <string name="calendar_description_label">Descripción (opcional)</string>
+    <string name="calendar_description_placeholder">Temas, lugar, notas…</string>
+    <string name="calendar_no_reminder">Sin recordatorio</string>
+    <string name="calendar_15min">15 minutos antes</string>
+    <string name="calendar_30min">30 minutos antes</string>
+    <string name="calendar_1h">1 hora antes</string>
+    <string name="calendar_2h">2 horas antes</string>
+    <string name="calendar_1d">1 día antes</string>
+    <string name="calendar_2d">2 días antes</string>
+    <string name="calendar_save">Crear</string>
+    <string name="calendar_update">Guardar</string>
+    <string name="calendar_cancel">Cancelar</string>
+    <string name="calendar_today">Hoy</string>
+    <string name="calendar_prev_day">- 1 día</string>
+    <string name="calendar_next_day">+ 1 día</string>
+    <string name="calendar_hour_label">Hora:</string>
+    <string name="calendar_event_saved">Evento creado</string>
+    <string name="calendar_event_updated">Evento actualizado</string>
+    <string name="calendar_event_deleted">Evento eliminado</string>
+    <string name="calendar_no_events">Sin eventos para este día</string>
+    <string name="calendar_add_event_day">Agregar evento</string>
+    <string name="calendar_prev_month">Mes anterior</string>
+    <string name="calendar_next_month">Siguiente mes</string>
+    <string name="calendar_go_today">Ir a hoy</string>
+    <string name="calendar_delete_title">Eliminar evento</string>
+    <string name="calendar_delete_confirm">¿Eliminar este evento? Esta acción no se puede deshacer.</string>
+    <string name="calendar_edit">Editar</string>
+    <string name="calendar_1h_plus">+1h</string>
+    <string name="calendar_import_gcal">Importar Google Calendar</string>
+    <string name="calendar_day_mon">Lun</string>
+    <string name="calendar_day_tue">Mar</string>
+    <string name="calendar_day_wed">Mié</string>
+    <string name="calendar_day_thu">Jue</string>
+    <string name="calendar_day_fri">Vie</string>
+    <string name="calendar_day_sat">Sáb</string>
+    <string name="calendar_day_sun">Dom</string>
+
+    <!-- Google Calendar -->
+    <string name="gcal_import_title">Importar Google Calendar</string>
+    <string name="gcal_import_description">Importar eventos de los próximos 90 días de tu Google Calendar.</string>
+    <string name="gcal_import_select_materia">Selecciona la materia a la que se asociarán:</string>
+    <string name="gcal_import_button">Importar</string>
+    <string name="gcal_import_success">%1$d eventos importados de Google Calendar</string>
+    <string name="gcal_import_login_required">Debes iniciar sesión para importar de Google Calendar</string>
+
+    <!-- Configuración -->
+    <string name="settings_title">Configuración</string>
+    <string name="settings_data_backup">Datos y Backup</string>
+    <string name="settings_export_backup">Exportar backup</string>
+    <string name="settings_restore_backup">Restaurar backup</string>
+    <string name="settings_notes_rounding">Notas y Redondeo</string>
+    <string name="settings_account">Cuenta</string>
+    <string name="settings_logout">Cerrar sesión</string>
+    <string name="settings_logout_confirm">¿Seguro que deseas salir? Tus notas quedarán guardadas localmente.</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_version">Versión %1$s</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_system">Idioma del sistema</string>
+    <string name="settings_language_es">Español</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_export_subtitle">Guarda todas tus notas en un archivo JSON</string>
+    <string name="settings_export_cta">Exportar</string>
+    <string name="settings_restore_subtitle">Importa notas desde un archivo .json previamente exportado</string>
+    <string name="settings_select_file">Seleccionar archivo</string>
+    <string name="settings_rounding_title">Redondeo de notas</string>
+    <string name="settings_decimals">Decimales a mostrar</string>
+    <string name="settings_rounding_mode">Modo de redondeo</string>
+    <string name="settings_back_to_login">Regresa a la pantalla de inicio de sesión</string>
+    <string name="settings_exit">Salir</string>
+    <string name="settings_share_backup">Compartir backup</string>
+    <string name="settings_app_description">Gestiona tus notas académicas de forma inteligente. Desarrollado con ❤️ para estudiantes.</string>
+
+    <!-- Recomendaciones IA -->
+    <string name="recommendations_title">Recomendaciones</string>
+    <string name="recommendations_select_materia">Selecciona una materia</string>
+    <string name="recommendations_loading">Generando recomendaciones…</string>
+    <string name="recommendations_retry">Reintentar</string>
+    <string name="recommendations_api_key_missing">Configura tu API key de Gemini</string>
+    <string name="recs_title">Recursos IA</string>
+    <string name="recs_subtitle">Generados con Gemini</string>
+    <string name="recs_video">Video</string>
+    <string name="recs_book">Libro</string>
+    <string name="recs_web">Web</string>
+    <string name="recs_videos">Videos</string>
+    <string name="recs_books">Libros</string>
+    <string name="recs_web_resources">Recursos web</string>
+    <string name="recs_regenerate">Regenerar recomendaciones</string>
+    <string name="recs_subject_label">MATERIA</string>
+    <string name="recs_open">Abrir</string>
+    <string name="recs_error">Error al generar</string>
+    <string name="recs_key_needed">Clave Gemini necesaria</string>
+    <string name="recs_will_generate">Gemini generará recursos personalizados para ti</string>
+    <string name="recs_no_subjects">Aún no tienes materias</string>
+    <string name="recs_no_subjects_hint">Agrega tu primera materia y vuelve aquí para obtener recomendaciones personalizadas</string>
+
+    <!-- Simulador -->
+    <string name="sim_what_if">¿Qué pasa si saco…?</string>
+    <string name="sim_hint">Ingresa notas hipotéticas para los componentes pendientes</string>
+    <string name="sim_all_graded">Todos los componentes ya tienen nota.</string>
+    <string name="sim_simulate">Simular</string>
+    <string name="sim_pass">¡Con estas notas aprobarías! 🎉</string>
+    <string name="sim_fail">Con estas notas no alcanzarías el mínimo…</string>
+
+    <!-- Calculadora -->
+    <string name="calc_enter_target">Ingresa la nota final que deseas alcanzar</string>
+    <string name="calc_calculate">Calcular</string>
+    <string name="calc_goal_reached">¡Meta ya alcanzada!</string>
+    <string name="calc_unreachable">Meta inalcanzable</string>
+    <string name="calc_error">No se pudo calcular</string>
+    <string name="calc_invalid_grade">Ingresa una nota válida</string>
+
+    <!-- Permisos -->
+    <string name="perm_notifications_title">Notificaciones</string>
+    <string name="perm_storage_title">Almacenamiento</string>
+    <string name="perm_needed">Permiso necesario</string>
+    <string name="perm_allow">Permitir</string>
+    <string name="perm_later">Ahora no</string>
+
+    <!-- Onboarding -->
+    <string name="onboard_welcome">Bienvenido a Gradify</string>
+    <string name="onboard_welcome_desc">Tu compañero académico para gestionar materias, notas y evaluaciones en un solo lugar.</string>
+    <string name="onboard_welcome_highlight">Registra tus materias, componentes y calificaciones de forma sencilla e intuitiva.</string>
+    <string name="onboard_stats">Estadísticas inteligentes</string>
+    <string name="onboard_stats_desc">Visualiza tu rendimiento con gráficos claros y análisis detallado de cada materia.</string>
+    <string name="onboard_stats_highlight">Obtén recomendaciones de estudio personalizadas con inteligencia artificial.</string>
+    <string name="onboard_calendar">Calendario de exámenes</string>
+    <string name="onboard_calendar_desc">Programa tus evaluaciones y recibe recordatorios automáticos.</string>
+    <string name="onboard_calendar_highlight">Nunca más olvides una fecha importante de tu semestre.</string>
+    <string name="onboard_backup">Respaldo seguro</string>
+    <string name="onboard_backup_desc">Exporta tus notas a Excel o PDF y sincroniza con Google Drive.</string>
+    <string name="onboard_backup_highlight">Tus datos siempre protegidos y disponibles en cualquier dispositivo.</string>
+    <string name="onboard_skip">Saltar</string>
+    <string name="onboard_prev">Anterior</string>
+    <string name="onboard_next">Siguiente</string>
+    <string name="onboard_start">¡Empezar!</string>
+
+    <!-- Estadísticas -->
+    <string name="stats_title">Estadísticas del semestre</string>
+    <string name="stats_back">Volver</string>
+    <string name="stats_best">Mejor rendimiento</string>
+    <string name="stats_needs_attention">Necesita atención</string>
+    <string name="stats_general_avg">Promedio general</string>
+    <string name="stats_no_grades">Sin notas</string>
+    <string name="stats_subject_status">Estado de materias</string>
+    <string name="stats_passing">Aprobadas</string>
+    <string name="stats_at_risk">En riesgo</string>
+    <string name="stats_failing">Reprobadas</string>
+    <string name="stats_performance">Rendimiento por materia</string>
+    <string name="stats_evolution">Evolución por semestre</string>
+    <string name="stats_history">Historial por semestre</string>
+    <string name="stats_empty">Sin estadísticas</string>
+    <string name="stats_empty_hint">Agrega materias y empieza a ingresar notas para ver tus estadísticas</string>
+
+    <!-- Eliminación general -->
+    <string name="delete_subject">Eliminar materia</string>
+
+    <!-- General -->
+    <string name="btn_back">Regresar</string>
+    <string name="btn_save">Guardar</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_delete">Eliminar</string>
+    <string name="btn_retry">Reintentar</string>
+    <string name="btn_close">Cerrar</string>
 
 </resources>

@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Ícono de fondo del adaptive launcher icon.
-    Degradado moderno de índigo a morado — representa logro académico.
+    Gradify – Adaptive icon background.
+    Degradado premium: azul profundo → violeta medio → teal.
+    Ángulo 315° (de esquina inferior-izq a superior-der) refuerza idea de ascenso.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <gradient
         android:type="linear"
-        android:angle="135"
-        android:startColor="#FF1A237E"
-        android:endColor="#FF512DA8" />
+        android:angle="315"
+        android:startColor="#FF0D1B4A"
+        android:centerColor="#FF5C258D"
+        android:endColor="#FF00838F" />
 </shape>

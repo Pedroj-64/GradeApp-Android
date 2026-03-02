@@ -56,11 +56,13 @@ class EditPorcentajesViewModel @Inject constructor(
      * La validación de suma al 100% se hace en la UI.
      */
     fun onPorcentajeChange(componenteId: Long, nuevoPorcentaje: Float) {
+        // Redondear a múltiplos de 1% para evitar imprecisión de punto flotante
+        val snapped = kotlin.math.round(nuevoPorcentaje * 100f) / 100f
         _uiState.update { state ->
             state.copy(
                 componentes = state.componentes.map { componente ->
                     if (componente.id == componenteId)
-                        componente.copy(porcentaje = nuevoPorcentaje)
+                        componente.copy(porcentaje = snapped)
                     else
                         componente
                 }

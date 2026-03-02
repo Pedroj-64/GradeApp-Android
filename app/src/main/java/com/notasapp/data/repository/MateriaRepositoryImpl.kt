@@ -36,23 +36,9 @@ class MateriaRepositoryImpl @Inject constructor(
     // ── Materias ────────────────────────────────────────────────
 
     override fun getMateriasByUsuario(usuarioId: String): Flow<List<Materia>> {
-        // Para la lista en Home, no necesitamos componentes: solo info básica.
-        // Se hace otra query ligera para evitar cargar todo el árbol.
-        return materiaDao.getMateriasByUsuario(usuarioId).map { entities ->
-            entities.map { entity ->
-                Materia(
-                    id = entity.id,
-                    usuarioId = entity.usuarioId,
-                    nombre = entity.nombre,
-                    periodo = entity.periodo,
-                    profesor = entity.profesor,
-                    escalaMin = entity.escalaMin,
-                    escalaMax = entity.escalaMax,
-                    notaAprobacion = entity.notaAprobacion,
-                    creditos = entity.creditos,
-                    googleSheetsId = entity.googleSheetsId
-                )
-            }
+        // Carga componentes + sub-notas para que promedio se calcule correctamente en Home.
+        return materiaDao.getMateriasConComponentesByUsuario(usuarioId).map { relations ->
+            relations.map { it.toDomain() }
         }
     }
 

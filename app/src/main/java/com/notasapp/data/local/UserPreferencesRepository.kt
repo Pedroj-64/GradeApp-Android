@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -38,6 +39,8 @@ class UserPreferencesRepository @Inject constructor(
         private val KEY_LAST_BACKUP_MS    = stringPreferencesKey("last_backup_ms")
         private val KEY_REDONDEO_DECIMALES = intPreferencesKey("redondeo_decimales")
         private val KEY_REDONDEO_MODO      = stringPreferencesKey("redondeo_modo")
+        private val KEY_HAS_SEEN_ONBOARDING       = booleanPreferencesKey("has_seen_onboarding")
+        private val KEY_HAS_EXPLAINED_NOTIFICATIONS = booleanPreferencesKey("has_explained_notifications")
     }
 
     // ── Email del usuario activo ─────────────────────────────────
@@ -101,5 +104,27 @@ class UserPreferencesRepository @Inject constructor(
             prefs[KEY_REDONDEO_DECIMALES] = config.decimales
             prefs[KEY_REDONDEO_MODO] = config.modoRedondeo.name
         }
+    }
+
+    // ── Onboarding ───────────────────────────────────────────────
+
+    /** Flow que indica si el usuario ya vio el onboarding. */
+    val hasSeenOnboarding: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[KEY_HAS_SEEN_ONBOARDING] ?: false }
+
+    /** Marca el onboarding como completado. */
+    suspend fun setHasSeenOnboarding() {
+        context.dataStore.edit { prefs -> prefs[KEY_HAS_SEEN_ONBOARDING] = true }
+    }
+
+    // ── Permisos explicados ──────────────────────────────────────
+
+    /** Flow que indica si ya se explicó el permiso de notificaciones. */
+    val hasExplainedNotifications: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[KEY_HAS_EXPLAINED_NOTIFICATIONS] ?: false }
+
+    /** Marca que ya se explicó el permiso de notificaciones. */
+    suspend fun setHasExplainedNotifications() {
+        context.dataStore.edit { prefs -> prefs[KEY_HAS_EXPLAINED_NOTIFICATIONS] = true }
     }
 }

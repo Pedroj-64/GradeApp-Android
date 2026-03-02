@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Tema base de la app (Material You) -->
-    <style name="Theme.NotasApp" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- Tema base de la app (AppCompat para soporte de idiomas per-app) -->
+    <style name="Theme.NotasApp" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Configuración básica de color (se sobrescribe con Dynamic Color en código Compose) -->
         <item name="android:windowBackground">@color/background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

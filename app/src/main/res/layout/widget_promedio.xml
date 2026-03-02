@@ -5,6 +5,7 @@
     Fondo degradado definido en @drawable/widget_background.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_promedio_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"

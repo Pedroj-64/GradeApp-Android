@@ -17,7 +17,7 @@
     <!-- Fondos -->
     <color name="background">#FAFAFA</color>
     <color name="surface">#FFFFFF</color>
-    <color name="splash_background">#1565C0</color>
+    <color name="splash_background">#0D1B4A</color>
 
     <!-- Texto -->
     <color name="on_background">#1A1C1E</color>

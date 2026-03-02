@@ -58,10 +58,12 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notasapp.R
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.Semestre
 import com.notasapp.ui.components.PromedioGauge
@@ -90,12 +92,12 @@ fun EstadisticasScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Estadísticas del semestre") },
+                title = { Text(stringResource(R.string.stats_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.stats_back)
                         )
                     }
                 },
@@ -171,7 +173,7 @@ private fun EstadisticasContent(
                     enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { -it / 3 }
                 ) {
                     MateriaRankingCard(
-                        titulo = "Mejor rendimiento",
+                        titulo = stringResource(R.string.stats_best),
                         materias = stats.materiasMejorNota,
                         esPositivo = true
                     )
@@ -186,7 +188,7 @@ private fun EstadisticasContent(
                     enter = fadeIn(tween(700)) + slideInVertically(tween(700)) { -it / 3 }
                 ) {
                     MateriaRankingCard(
-                        titulo = "Necesita atención",
+                        titulo = stringResource(R.string.stats_needs_attention),
                         materias = stats.materiasPeorNota,
                         esPositivo = false
                     )
@@ -256,7 +258,7 @@ private fun PromedioGeneralCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Promedio general",
+                text = stringResource(R.string.stats_general_avg),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -270,7 +272,7 @@ private fun PromedioGeneralCard(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = if (promedioGeneral != null) "${"%.2f".format(promedioGeneral)}" else "Sin notas",
+                text = if (promedioGeneral != null) "${"%.2f".format(promedioGeneral)}" else stringResource(R.string.stats_no_grades),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -313,13 +315,13 @@ private fun EstadoGrid(
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Estado de materias",
+            stringResource(R.string.stats_subject_status),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             EstadoTile(
-                label = "Aprobadas",
+                label = stringResource(R.string.stats_passing),
                 count = aprobadas,
                 icon = Icons.Default.CheckCircle,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -327,7 +329,7 @@ private fun EstadoGrid(
                 modifier = Modifier.weight(1f)
             )
             EstadoTile(
-                label = "En riesgo",
+                label = stringResource(R.string.stats_at_risk),
                 count = enRiesgo,
                 icon = Icons.Default.Warning,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -337,7 +339,7 @@ private fun EstadoGrid(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             EstadoTile(
-                label = "Reprobadas",
+                label = stringResource(R.string.stats_failing),
                 count = reprobadas,
                 icon = Icons.Default.Error,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -346,7 +348,7 @@ private fun EstadoGrid(
             )
             @Suppress("DEPRECATION")
             EstadoTile(
-                label = "Sin notas",
+                label = stringResource(R.string.stats_no_grades),
                 count = sinNotas,
                 icon = Icons.Default.HelpOutline,
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -513,7 +515,7 @@ private fun RendimientoBarChart(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Rendimiento por materia",
+                    text = stringResource(R.string.stats_performance),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -607,7 +609,7 @@ private fun SemesterEvolutionChart(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Evolución por semestre",
+                    text = stringResource(R.string.stats_evolution),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -750,7 +752,7 @@ private fun SemestresHistorialCard(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Historial por semestre",
+                    text = stringResource(R.string.stats_history),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -825,12 +827,12 @@ private fun EmptyEstadisticas(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Sin estadísticas",
+                text = stringResource(R.string.stats_empty),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Agrega materias y empieza a ingresar notas para ver tu resumen del semestre.",
+                text = stringResource(R.string.stats_empty_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

@@ -11,7 +11,13 @@ sealed class Screen(val route: String) {
     // ── Autenticación ──────────────────────────────────────────
     data object Login : Screen("login")
 
-    // ── Home ───────────────────────────────────────────────────
+    // ── Contenedor principal (con Bottom Navigation) ──────────
+    data object Main : Screen("main")
+
+    // ── Onboarding (tutorial de primer uso) ──────────────────
+    data object Onboarding : Screen("onboarding")
+
+    // ── Home (pestaña dentro del Main) ─────────────────────────
     data object Home : Screen("home")
 
     // ── Crear Materia (Wizard de 3 pasos) ──────────────────────
@@ -47,7 +53,17 @@ sealed class Screen(val route: String) {
     data object Estadisticas : Screen("estadisticas")
 
     // ── Recomendaciones de estudio con IA ──────────────────────
+    /** Pestaña de recomendaciones dentro del Bottom Nav (sin materia preseleccionada). */
     data object Recomendaciones : Screen("recomendaciones")
+
+    /** Ruta de recomendaciones con materia preseleccionada (desde MateriaDetail). */
+    data object RecomendacionesMateria : Screen("recomendaciones/{materiaId}") {
+        const val ARG_MATERIA_ID = "materiaId"
+        fun createRoute(materiaId: Long) = "recomendaciones/$materiaId"
+    }
+
+    // ── Calendario académico ─────────────────────────────────────
+    data object Calendar : Screen("calendar")
 
     // ── Configuración global ────────────────────────────────────
     data object Settings : Screen("settings")

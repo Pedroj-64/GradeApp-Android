@@ -7,7 +7,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.notasapp.data.worker.ReminderWorker
-import com.notasapp.data.worker.SheetsSyncWorker
 import com.notasapp.data.worker.AutoBackupWorker
 import com.notasapp.utils.NotificationHelper
 import dagger.hilt.android.HiltAndroidApp
@@ -34,7 +33,6 @@ class NotasApp : Application(), Configuration.Provider {
         super.onCreate()
         initTimber()
         notificationHelper.createNotificationChannels()
-        scheduleSheetsSyncWorker()
         scheduleReminderWorker()
         scheduleAutoBackupWorker()
     }
@@ -47,21 +45,6 @@ class NotasApp : Application(), Configuration.Provider {
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
-
-    /**
-     * Inicializa Timber únicamente en builds de debug.
-     * En release no se registra ningún árbol para evitar logs en producción.
-     */
-    private fun scheduleSheetsSyncWorker() {
-        val request = PeriodicWorkRequestBuilder<SheetsSyncWorker>(24, TimeUnit.HOURS)
-            .setConstraints(SheetsSyncWorker.NETWORK_CONSTRAINTS)
-            .build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            SheetsSyncWorker.TAG,
-            ExistingPeriodicWorkPolicy.KEEP,
-            request
-        )
-    }
 
     private fun scheduleReminderWorker() {
         val request = PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)
@@ -83,6 +66,9 @@ class NotasApp : Application(), Configuration.Provider {
         )
     }
 
+    /**
+     * Inicializa Timber únicamente en builds de debug.
+     */
     private fun initTimber() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -104,23 +105,17 @@ class HomeViewModel @Inject constructor(
 
     /** Semestres disponibles para el filtro. */
     val semestresDisponibles: StateFlow<List<String>> = allMaterias
-        .combine(flowOf(Unit)) { materias, _ ->
-            materias.map { it.periodo }.distinct().sorted()
-        }
+        .map { materias -> materias.map { it.periodo }.distinct().sorted() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Materias en riesgo académico (nota proyectada < mínima). */
     val materiasEnRiesgo: StateFlow<List<Materia>> = allMaterias
-        .combine(flowOf(Unit)) { materias, _ ->
-            materias.filter { m ->
-                m.promedio != null && !m.aprobado
-            }
-        }
+        .map { materias -> materias.filter { m -> m.promedio != null && !m.aprobado } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Promedio general ponderado rápido para el dashboard. */
     val promedioGeneral: StateFlow<Float?> = allMaterias
-        .combine(flowOf(Unit)) { materias, _ ->
+        .map { materias ->
             val conNotas = materias.filter { it.promedio != null }
             if (conNotas.isEmpty()) null
             else {
@@ -132,9 +127,6 @@ class HomeViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()

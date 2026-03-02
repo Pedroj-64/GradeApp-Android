@@ -16,6 +16,13 @@
         android:name="android.permission.POST_NOTIFICATIONS"
         android:minSdkVersion="33" />
 
+    <!-- Permiso para alarmas exactas (recordatorios de exámenes) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Permiso para reprogramar alarmas después de reinicio -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".NotasApp"
         android:allowBackup="true"
@@ -26,6 +33,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NotasApp"
+        android:localeConfig="@xml/locales_config"
         android:enableOnBackInvokedCallback="true">
 
         <!-- Actividad principal -->
@@ -41,7 +49,7 @@
             </intent-filter>
         </activity>
 
-        <!-- WorkManager: sync automatico con Google Sheets -->
+        <!-- WorkManager: on-demand initialization (vía NotasApp : Configuration.Provider) -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -49,7 +57,8 @@
             tools:node="merge">
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup" />
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
 
         <!-- Widget: Promedio del Semestre en la pantalla de inicio -->
@@ -65,6 +74,33 @@
                 android:resource="@xml/widget_promedio_info" />
         </receiver>
 
+        <!-- Widget: Materia Destacada (mejor o peor materia) -->
+        <receiver
+            android:name=".widget.MateriaWidgetProvider"
+            android:exported="true"
+            android:label="Materia Destacada">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_materia_info" />
+        </receiver>
+
+        <!-- Widget: Resumen del Semestre (panel completo) -->
+        <receiver
+            android:name=".widget.ResumenSemestreWidgetProvider"
+            android:exported="true"
+            android:label="Resumen del Semestre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_resumen_info" />
+        </receiver>
+
+        <!-- FileProvider: comparte el backup JSON sin permisos de almacenamiento -->
         <!-- FileProvider: comparte el backup JSON sin permisos de almacenamiento -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -75,6 +111,21 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_provider_paths" />
         </provider>
+
+        <!-- Receiver: alarmas de recordatorio de exámenes -->
+        <receiver
+            android:name=".data.receiver.ExamAlarmReceiver"
+            android:exported="false" />
+
+        <!-- Per-app language support (AppCompat) -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
 
     </application>
 

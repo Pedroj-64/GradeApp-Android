@@ -24,8 +24,8 @@ android {
         applicationId = "com.notasapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "2.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
@@ -37,6 +37,21 @@ android {
             "String",
             "GEMINI_API_KEY",
             "\"${localProps.getProperty("GEMINI_API_KEY") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "BACKEND_URL",
+            "\"${localProps.getProperty("BACKEND_URL") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "GROQ_API_KEY",
+            "\"${localProps.getProperty("GROQ_API_KEY") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "OPENROUTER_API_KEY",
+            "\"${localProps.getProperty("OPENROUTER_API_KEY") ?: ""}\""
         )
         vectorDrawables {
             useSupportLibrary = true
@@ -51,6 +66,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             isDebuggable = true
@@ -78,6 +94,15 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/INDEX.LIST"
+        }
+    }
+
+    applicationVariants.all {
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = "gradify.apk"
         }
     }
 }
@@ -94,6 +119,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.appcompat)
 
     // Jetpack Compose BOM
     implementation(platform(libs.androidx.compose.bom))
@@ -123,13 +149,19 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
-    // Google Sheets API
-    implementation(libs.google.api.services.sheets) {
+    // Google Drive API
+    implementation(libs.google.api.services.drive) {
+        exclude(group = "org.apache.httpcomponents")
+    }
+    implementation(libs.google.api.services.calendar) {
         exclude(group = "org.apache.httpcomponents")
     }
     implementation(libs.google.api.client.android) {
         exclude(group = "org.apache.httpcomponents")
     }
+
+    // Google Generative AI — ya NO se usa el SDK; se llama REST directo
+    // implementation(libs.google.ai.generativeai)
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)

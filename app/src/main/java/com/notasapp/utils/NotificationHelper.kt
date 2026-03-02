@@ -31,6 +31,7 @@ class NotificationHelper @Inject constructor(
     companion object {
         const val CHANNEL_REMINDERS = "notasapp_reminders"
         const val CHANNEL_SYNC      = "notasapp_sync"
+        const val CHANNEL_EXAMS     = "notasapp_exams"
     }
 
     // ── Channel creation ─────────────────────────────────────────────────────
@@ -60,6 +61,17 @@ class NotificationHelper @Inject constructor(
             NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = "Estado del worker de sincronización automática"
+            manager.createNotificationChannel(this)
+        }
+
+        NotificationChannel(
+            CHANNEL_EXAMS,
+            "Recordatorios de Exámenes",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Alertas de exámenes, entregas y evaluaciones programadas"
+            enableLights(true)
+            enableVibration(true)
             manager.createNotificationChannel(this)
         }
     }
@@ -95,6 +107,37 @@ class NotificationHelper @Inject constructor(
             .build()
 
         // runCatching absorbe SecurityException si el permiso POST_NOTIFICATIONS fue revocado
+        runCatching {
+            NotificationManagerCompat.from(context).notify(notificationId, notification)
+        }
+    }
+
+    /**
+     * Envía una notificación de recordatorio de examen/evento académico.
+     * Usa el canal de alta prioridad [CHANNEL_EXAMS].
+     */
+    fun sendExamReminder(title: String, message: String, notificationId: Int) {
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("navigate_to", "calendar")
+            },
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_EXAMS)
+            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .build()
+
         runCatching {
             NotificationManagerCompat.from(context).notify(notificationId, notification)
         }

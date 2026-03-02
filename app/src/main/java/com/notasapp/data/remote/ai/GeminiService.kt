@@ -2,12 +2,11 @@ package com.notasapp.data.remote.ai
 
 import com.notasapp.BuildConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.inject.Inject
@@ -15,12 +14,6 @@ import javax.inject.Singleton
 
 /**
  * Modelo de una recomendación generada por IA.
- *
- * @param tipo         YOUTUBE, LIBRO o RECURSO
- * @param titulo       Título del recurso recomendado
- * @param descripcion  Breve descripción de por qué es útil
- * @param url          Enlace directo (YouTube URL o link de búsqueda)
- * @param autor        Autor o canal (opcional)
  */
 data class Recomendacion(
     val tipo: TipoRecomendacion,
@@ -35,181 +28,521 @@ enum class TipoRecomendacion {
 }
 
 /**
- * Servicio de IA que usa la API gratuita de Gemini (Google Generative AI)
- * para analizar el nombre de una materia y generar recomendaciones de
- * videos de YouTube, libros y recursos de estudio.
+ * Servicio de IA multi-proveedor para generar recomendaciones de estudio.
  *
- * Requiere que `GEMINI_API_KEY` esté configurado en `local.properties`.
- * Obtén una clave gratuita en: https://aistudio.google.com/app/apikey
+ * Cadena de fallback:
+ * 1. **Backend proxy** (no expone API key, configurable)
+ * 2. **Gemini REST API** (`generativelanguage.googleapis.com`) — API key gratuita
+ * 3. **Groq REST API** (`api.groq.com`) — API key gratuita, modelos Llama 3
+ * 4. **OpenRouter REST API** (`openrouter.ai`) — modelos gratuitos disponibles
+ *
+ * Todas las llamadas son REST puro (sin SDKs), para evitar problemas con R8.
+ *
+ * Claves necesarias en `local.properties`:
+ * - `GEMINI_API_KEY`    → https://aistudio.google.com/app/apikey
+ * - `GROQ_API_KEY`      → https://console.groq.com/keys (gratis)
+ * - `OPENROUTER_API_KEY` → https://openrouter.ai/keys (gratis, modelos free)
  */
 @Singleton
 class GeminiService @Inject constructor() {
 
     companion object {
-        private const val BASE_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-        private const val TIMEOUT_MS = 30_000
+        private const val MAX_RETRIES = 2
+        private const val INITIAL_BACKOFF_MS = 2_000L
+
+        // ── Gemini ──────────────────────────────────────────────────
+        private const val GEMINI_API_BASE =
+            "https://generativelanguage.googleapis.com/v1beta"
+        private val GEMINI_MODELS = listOf(
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-pro"
+        )
+
+        // ── Groq ────────────────────────────────────────────────────
+        private const val GROQ_API_BASE =
+            "https://api.groq.com/openai/v1/chat/completions"
+        private val GROQ_MODELS = listOf(
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768"
+        )
+
+        // ── OpenRouter ──────────────────────────────────────────────
+        private const val OPENROUTER_API_BASE =
+            "https://openrouter.ai/api/v1/chat/completions"
+        private val OPENROUTER_MODELS = listOf(
+            "google/gemini-2.0-flash-exp:free",
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "mistralai/mistral-7b-instruct:free"
+        )
+
+        /** URL base del backend proxy (configurada en local.properties). */
+        private val BACKEND_URL: String = BuildConfig.BACKEND_URL
     }
+
+    /** Throttle básico: ~13 RPM global. */
+    @Volatile private var lastCallTimestamp = 0L
+    private val minIntervalMs = 4_500L
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Flujo principal
+    // ═══════════════════════════════════════════════════════════════════
 
     /**
      * Genera recomendaciones de estudio para una materia dada.
-     *
-     * @param nombreMateria  Nombre de la materia (ej: "Morfología", "Cálculo Integral")
-     * @param periodo        Período académico (opcional, para contexto)
-     * @return Lista de recomendaciones o lista vacía si hay error
+     * Prueba múltiples proveedores de IA en cascada hasta que uno funcione.
      */
     suspend fun generarRecomendaciones(
         nombreMateria: String,
-        periodo: String? = null
+        periodo: String? = null,
+        componentesInfo: List<Pair<String, Float?>>? = null,
+        promedio: Float? = null,
+        porcentajeEvaluado: Float? = null,
+        notaAprobacion: Float? = null,
+        aprobado: Boolean? = null
     ): Result<List<Recomendacion>> = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isBlank()) {
-            return@withContext Result.failure(
-                IllegalStateException("GEMINI_API_KEY no configurada. Agrega GEMINI_API_KEY=tu_clave en local.properties")
+        val prompt = buildPrompt(
+            nombreMateria, periodo, componentesInfo,
+            promedio, porcentajeEvaluado, notaAprobacion, aprobado
+        )
+        val errors = mutableListOf<String>()
+
+        // ── 1. Backend proxy ───────────────────────────────────────
+        if (BACKEND_URL.isNotBlank()) {
+            try {
+                Timber.d("Estrategia 1: backend proxy → $BACKEND_URL")
+                val result = callBackendProxy(
+                    nombreMateria, periodo, componentesInfo,
+                    promedio, porcentajeEvaluado, notaAprobacion, aprobado
+                )
+                if (result.isNotEmpty()) {
+                    Timber.i("Backend proxy → ${result.size} recomendaciones")
+                    return@withContext Result.success(result)
+                }
+            } catch (e: Exception) {
+                errors += "Backend: ${e.message}"
+                Timber.w(e, "Backend proxy falló")
+            }
+        }
+
+        // Throttle global
+        val elapsed = System.currentTimeMillis() - lastCallTimestamp
+        if (elapsed < minIntervalMs) delay(minIntervalMs - elapsed)
+
+        // ── 2. Gemini REST API ─────────────────────────────────────
+        val geminiKey = BuildConfig.GEMINI_API_KEY
+        if (geminiKey.isNotBlank() && geminiKey != "null") {
+            try {
+                Timber.d("Estrategia 2: Gemini REST API")
+                val text = tryProviderModels("Gemini", GEMINI_MODELS) { model ->
+                    callGeminiRest(geminiKey, model, prompt)
+                }
+                lastCallTimestamp = System.currentTimeMillis()
+                return@withContext Result.success(parseRecomendaciones(text))
+            } catch (e: Exception) {
+                errors += "Gemini: ${e.message}"
+                Timber.w(e, "Gemini REST falló")
+            }
+        }
+
+        // ── 3. Groq REST API ───────────────────────────────────────
+        val groqKey = BuildConfig.GROQ_API_KEY
+        if (groqKey.isNotBlank() && groqKey != "null") {
+            try {
+                Timber.d("Estrategia 3: Groq REST API")
+                val text = tryProviderModels("Groq", GROQ_MODELS) { model ->
+                    callOpenAICompatible(GROQ_API_BASE, groqKey, model, prompt)
+                }
+                lastCallTimestamp = System.currentTimeMillis()
+                return@withContext Result.success(parseRecomendaciones(text))
+            } catch (e: Exception) {
+                errors += "Groq: ${e.message}"
+                Timber.w(e, "Groq REST falló")
+            }
+        }
+
+        // ── 4. OpenRouter REST API ─────────────────────────────────
+        val orKey = BuildConfig.OPENROUTER_API_KEY
+        if (orKey.isNotBlank() && orKey != "null") {
+            try {
+                Timber.d("Estrategia 4: OpenRouter REST API")
+                val text = tryProviderModels("OpenRouter", OPENROUTER_MODELS) { model ->
+                    callOpenAICompatible(OPENROUTER_API_BASE, orKey, model, prompt)
+                }
+                lastCallTimestamp = System.currentTimeMillis()
+                return@withContext Result.success(parseRecomendaciones(text))
+            } catch (e: Exception) {
+                errors += "OpenRouter: ${e.message}"
+                Timber.w(e, "OpenRouter REST falló")
+            }
+        }
+
+        // ── Todos agotados ─────────────────────────────────────────
+        val summary = errors.joinToString(" | ")
+        val noKeysMsg = buildString {
+            if (geminiKey.isBlank() || geminiKey == "null") append("GEMINI_API_KEY, ")
+            if (groqKey.isBlank() || groqKey == "null") append("GROQ_API_KEY, ")
+            if (orKey.isBlank() || orKey == "null") append("OPENROUTER_API_KEY, ")
+        }.trimEnd(',', ' ')
+
+        val errorMsg = if (noKeysMsg.isNotBlank())
+            "No se configuraron claves de IA ($noKeysMsg). Agrega al menos una en local.properties. Errores: $summary"
+        else
+            "Todos los proveedores de IA fallaron. $summary"
+
+        Result.failure(Exception(errorMsg))
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Proveedores de IA
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Prueba múltiples modelos de un proveedor con reintentos y backoff.
+     */
+    private suspend fun tryProviderModels(
+        providerName: String,
+        models: List<String>,
+        apiCall: (model: String) -> String
+    ): String {
+        var lastException: Exception? = null
+
+        for (model in models) {
+            for (attempt in 1..MAX_RETRIES) {
+                try {
+                    Timber.d("$providerName → $model (intento $attempt)")
+                    val text = apiCall(model)
+                    if (text.isBlank()) {
+                        lastException = Exception("$model devolvió respuesta vacía")
+                        continue
+                    }
+                    Timber.i("$providerName → $model OK (${text.length} chars)")
+                    return text
+                } catch (e: AiApiException) {
+                    Timber.w("$providerName → $model HTTP ${e.statusCode}")
+                    lastException = e
+
+                    // API key inválida → no reintentar este proveedor
+                    if (e.isAuthError) throw e
+
+                    // Modelo no existe → siguiente modelo
+                    if (e.isNotFound) break
+
+                    // Rate limit → backoff
+                    if (e.statusCode == 429 && attempt < MAX_RETRIES) {
+                        delay(INITIAL_BACKOFF_MS * attempt * 2)
+                        continue
+                    }
+
+                    if (attempt < MAX_RETRIES) delay(INITIAL_BACKOFF_MS * attempt)
+                } catch (e: Exception) {
+                    lastException = e
+                    Timber.w("$providerName → $model error: ${e.message}")
+                    if (attempt < MAX_RETRIES) delay(INITIAL_BACKOFF_MS * attempt)
+                }
+            }
+        }
+
+        throw lastException ?: Exception("$providerName: todos los modelos agotados")
+    }
+
+    // ── Gemini REST ─────────────────────────────────────────────────
+
+    /**
+     * POST /v1beta/models/{model}:generateContent?key={apiKey}
+     */
+    private fun callGeminiRest(apiKey: String, modelName: String, prompt: String): String {
+        val url = URL("$GEMINI_API_BASE/models/$modelName:generateContent?key=$apiKey")
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+            connectTimeout = 30_000
+            readTimeout = 60_000
+            doOutput = true
+        }
+
+        val body = JSONObject().apply {
+            put("contents", JSONArray().put(
+                JSONObject().put("parts", JSONArray().put(
+                    JSONObject().put("text", prompt)
+                ))
+            ))
+            put("generationConfig", JSONObject().apply {
+                put("temperature", 0.4)
+                put("maxOutputTokens", 2048)
+            })
+        }
+
+        conn.outputStream.bufferedWriter().use { it.write(body.toString()) }
+        val code = conn.responseCode
+
+        if (code !in 200..299) {
+            val err = conn.errorStream?.bufferedReader()?.readText() ?: ""
+            conn.disconnect()
+            throw AiApiException(code, err, "Gemini")
+        }
+
+        val resp = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+
+        val json = JSONObject(resp)
+        val candidates = json.optJSONArray("candidates")
+            ?: throw Exception("Sin 'candidates' en respuesta de $modelName. Resp: ${resp.take(200)}")
+        if (candidates.length() == 0) throw Exception("candidates vacío de $modelName")
+
+        return candidates.getJSONObject(0)
+            .getJSONObject("content")
+            .getJSONArray("parts")
+            .getJSONObject(0)
+            .getString("text")
+    }
+
+    // ── OpenAI-compatible (Groq, OpenRouter, etc.) ──────────────────
+
+    /**
+     * POST a endpoint compatible con formato OpenAI Chat Completions.
+     * Funciona con Groq, OpenRouter, Together AI, etc.
+     */
+    private fun callOpenAICompatible(
+        apiUrl: String,
+        apiKey: String,
+        modelName: String,
+        prompt: String
+    ): String {
+        val conn = (URL(apiUrl).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+            setRequestProperty("Authorization", "Bearer $apiKey")
+            connectTimeout = 30_000
+            readTimeout = 60_000
+            doOutput = true
+        }
+
+        val body = JSONObject().apply {
+            put("model", modelName)
+            put("messages", JSONArray().apply {
+                put(JSONObject().apply {
+                    put("role", "system")
+                    put("content", "Eres un tutor educativo experto. Responde SOLO con JSON array válido, sin texto adicional.")
+                })
+                put(JSONObject().apply {
+                    put("role", "user")
+                    put("content", prompt)
+                })
+            })
+            put("temperature", 0.4)
+            put("max_tokens", 2048)
+        }
+
+        conn.outputStream.bufferedWriter().use { it.write(body.toString()) }
+        val code = conn.responseCode
+
+        if (code !in 200..299) {
+            val err = conn.errorStream?.bufferedReader()?.readText() ?: ""
+            conn.disconnect()
+            throw AiApiException(code, err, "OpenAI-compat")
+        }
+
+        val resp = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+
+        val json = JSONObject(resp)
+        val choices = json.optJSONArray("choices")
+            ?: throw Exception("Sin 'choices' en respuesta. Resp: ${resp.take(200)}")
+        if (choices.length() == 0) throw Exception("choices vacío")
+
+        return choices.getJSONObject(0)
+            .getJSONObject("message")
+            .getString("content")
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Backend proxy
+    // ═══════════════════════════════════════════════════════════════════
+
+    private fun callBackendProxy(
+        nombreMateria: String,
+        periodo: String?,
+        componentesInfo: List<Pair<String, Float?>>?,
+        promedio: Float?,
+        porcentajeEvaluado: Float?,
+        notaAprobacion: Float?,
+        aprobado: Boolean?
+    ): List<Recomendacion> {
+        val url = URL("${BACKEND_URL.trimEnd('/')}/api/v1/recomendaciones")
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            setRequestProperty("Content-Type", "application/json")
+            connectTimeout = 15_000
+            readTimeout = 60_000
+            doOutput = true
+        }
+
+        val requestJson = JSONObject().apply {
+            put("nombreMateria", nombreMateria)
+            periodo?.let { put("periodo", it) }
+            promedio?.let { put("promedio", it.toDouble()) }
+            porcentajeEvaluado?.let { put("porcentajeEvaluado", it.toDouble()) }
+            notaAprobacion?.let { put("notaAprobacion", it.toDouble()) }
+            aprobado?.let { put("aprobado", it) }
+            if (!componentesInfo.isNullOrEmpty()) {
+                val compArray = JSONArray()
+                componentesInfo.forEach { (nombre, nota) ->
+                    compArray.put(JSONObject().apply {
+                        put("nombre", nombre)
+                        if (nota != null) put("nota", nota.toDouble()) else put("nota", JSONObject.NULL)
+                    })
+                }
+                put("componentes", compArray)
+            }
+        }
+
+        conn.outputStream.bufferedWriter().use { it.write(requestJson.toString()) }
+
+        val responseCode = conn.responseCode
+        val responseBody = if (responseCode in 200..299) {
+            conn.inputStream.bufferedReader().readText()
+        } else {
+            val errorBody = conn.errorStream?.bufferedReader()?.readText() ?: ""
+            throw Exception("Backend proxy error $responseCode: $errorBody")
+        }
+
+        val json = JSONObject(responseBody)
+        val recsArray = json.getJSONArray("recomendaciones")
+        return (0 until recsArray.length()).map { i ->
+            val obj = recsArray.getJSONObject(i)
+            Recomendacion(
+                tipo = try {
+                    TipoRecomendacion.valueOf(obj.getString("tipo"))
+                } catch (_: Exception) {
+                    TipoRecomendacion.RECURSO
+                },
+                titulo = obj.getString("titulo"),
+                descripcion = obj.getString("descripcion"),
+                url = obj.getString("url"),
+                autor = obj.optString("autor", "").takeIf { it != "null" && it.isNotBlank() }
+            )
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Prompt
+    // ═══════════════════════════════════════════════════════════════════
+
+    private fun buildPrompt(
+        nombreMateria: String,
+        periodo: String?,
+        componentesInfo: List<Pair<String, Float?>>?,
+        promedio: Float?,
+        porcentajeEvaluado: Float?,
+        notaAprobacion: Float?,
+        aprobado: Boolean?
+    ): String {
+        val sb = StringBuilder()
+
+        sb.appendLine("Tutor educativo: recomienda recursos REALES para la materia \"$nombreMateria\".")
+        periodo?.let { sb.appendLine("Período: $it") }
+
+        if (promedio != null && notaAprobacion != null) {
+            sb.appendLine("Promedio: %.2f/%.2f. Estado: %s.".format(
+                promedio, notaAprobacion,
+                if (aprobado == true) "APROBANDO" else "EN RIESGO"
+            ))
+        }
+        porcentajeEvaluado?.let {
+            sb.appendLine("Progreso: ${(it * 100).toInt()}% evaluado.")
+        }
+
+        if (!componentesInfo.isNullOrEmpty()) {
+            sb.append("Componentes: ")
+            sb.appendLine(componentesInfo.take(6).joinToString(", ") { (n, nota) ->
+                "$n=${nota?.let { "%.1f".format(it) } ?: "?"}"
+            })
+        }
+
+        sb.appendLine()
+        sb.appendLine("Genera 5 recomendaciones personalizadas:")
+        sb.appendLine("- 2 YOUTUBE: canales reales en español. URL: https://www.youtube.com/results?search_query=<tema>")
+        sb.appendLine("- 2 LIBRO: libros reales universitarios. URL: https://www.google.com/search?tbm=bks&q=<titulo+autor>")
+        sb.appendLine("- 1 RECURSO: plataforma real (Khan Academy, Coursera, edX, etc). URL real.")
+        sb.appendLine()
+        sb.appendLine("""Responde SOLO JSON array:
+[{"tipo":"YOUTUBE","titulo":"...","descripcion":"...","url":"https://...","autor":"..."},{"tipo":"LIBRO","titulo":"...","descripcion":"...","url":"https://...","autor":"..."},{"tipo":"RECURSO","titulo":"...","descripcion":"...","url":"https://...","autor":null}]""")
+
+        return sb.toString()
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Parseo
+    // ═══════════════════════════════════════════════════════════════════
+
+    private fun parseRecomendaciones(jsonText: String): List<Recomendacion> {
+        val cleanJson = extractJsonArray(jsonText)
+
+        val array = try {
+            JSONArray(cleanJson)
+        } catch (e: Exception) {
+            Timber.e(e, "Error parseando JSON. Respuesta: ${cleanJson.take(300)}")
+            throw Exception(
+                "JSON parse error: ${e.message}. Respuesta: ${cleanJson.take(200)}", e
             )
         }
 
-        try {
-            val prompt = buildPrompt(nombreMateria, periodo)
-            val responseText = callGeminiApi(apiKey, prompt)
-            val recomendaciones = parseRecomendaciones(responseText)
-            Result.success(recomendaciones)
-        } catch (e: Exception) {
-            Timber.e(e, "Error al generar recomendaciones para '$nombreMateria'")
-            Result.failure(e)
+        val lista = (0 until array.length()).map { i ->
+            val obj = array.getJSONObject(i)
+            Recomendacion(
+                tipo = try {
+                    TipoRecomendacion.valueOf(obj.getString("tipo"))
+                } catch (_: Exception) {
+                    TipoRecomendacion.RECURSO
+                },
+                titulo = obj.getString("titulo"),
+                descripcion = obj.getString("descripcion"),
+                url = obj.getString("url"),
+                autor = obj.optString("autor", "")
+                    .takeIf { it != "null" && it.isNotBlank() }
+            )
         }
-    }
 
-    private fun buildPrompt(nombreMateria: String, periodo: String?): String {
-        val contexto = periodo?.let { " del período $it" } ?: ""
-        return """
-Eres un asistente educativo experto. Analiza el nombre de esta materia universitaria$contexto y genera recomendaciones de estudio.
-
-Materia: "$nombreMateria"
-
-Genera EXACTAMENTE 6 recomendaciones en formato JSON, siguiendo esta estructura:
-- 3 videos de YouTube (canales educativos reales y populares en español o inglés)
-- 2 libros de referencia (títulos reales y reconocidos)
-- 1 recurso web gratuito (plataforma educativa, sitio web, herramienta)
-
-Para los videos de YouTube, genera URLs de búsqueda de YouTube con el tema específico.
-Para los libros, genera URLs de búsqueda en Google Books.
-Para recursos web, usa URLs reales de plataformas educativas conocidas.
-
-Responde SOLO con un JSON array válido, sin markdown ni texto adicional:
-[
-  {
-    "tipo": "YOUTUBE",
-    "titulo": "Título descriptivo del video/canal",
-    "descripcion": "Por qué este recurso es útil para la materia",
-    "url": "https://www.youtube.com/results?search_query=tema+específico",
-    "autor": "Nombre del canal o creador"
-  },
-  {
-    "tipo": "LIBRO",
-    "titulo": "Título del Libro",
-    "descripcion": "Por qué este libro es recomendado",
-    "url": "https://www.google.com/search?tbm=bks&q=titulo+del+libro",
-    "autor": "Autor del libro"
-  },
-  {
-    "tipo": "RECURSO",
-    "titulo": "Nombre del recurso",
-    "descripcion": "Qué ofrece este recurso",
-    "url": "https://url-real-del-recurso.com",
-    "autor": null
-  }
-]
-""".trimIndent()
-    }
-
-    private fun callGeminiApi(apiKey: String, prompt: String): String {
-        val url = URL("$BASE_URL?key=$apiKey")
-        val connection = url.openConnection() as HttpURLConnection
-
-        try {
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.connectTimeout = TIMEOUT_MS
-            connection.readTimeout = TIMEOUT_MS
-            connection.doOutput = true
-
-            // Construir el body de la request
-            val requestBody = JSONObject().apply {
-                put("contents", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("parts", JSONArray().apply {
-                            put(JSONObject().apply {
-                                put("text", prompt)
-                            })
-                        })
-                    })
-                })
-                put("generationConfig", JSONObject().apply {
-                    put("temperature", 0.7)
-                    put("maxOutputTokens", 2048)
-                    put("responseMimeType", "application/json")
-                })
-            }
-
-            connection.outputStream.use { os ->
-                os.write(requestBody.toString().toByteArray(Charsets.UTF_8))
-                os.flush()
-            }
-
-            val responseCode = connection.responseCode
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                val errorStream = connection.errorStream?.let { stream ->
-                    BufferedReader(InputStreamReader(stream)).use { it.readText() }
-                } ?: "Sin detalles"
-                Timber.e("Gemini API error $responseCode: $errorStream")
-                throw Exception("Error de la API de Gemini ($responseCode): $errorStream")
-            }
-
-            val response = BufferedReader(InputStreamReader(connection.inputStream)).use {
-                it.readText()
-            }
-
-            // Extraer el texto de la respuesta de Gemini
-            val jsonResponse = JSONObject(response)
-            val candidates = jsonResponse.getJSONArray("candidates")
-            val content = candidates.getJSONObject(0).getJSONObject("content")
-            val parts = content.getJSONArray("parts")
-            return parts.getJSONObject(0).getString("text")
-        } finally {
-            connection.disconnect()
+        if (lista.isEmpty()) {
+            throw Exception("IA devolvió 0 recomendaciones. Raw: ${cleanJson.take(200)}")
         }
+        return lista
     }
 
-    private fun parseRecomendaciones(jsonText: String): List<Recomendacion> {
-        // Limpiar posible markdown wrapping
-        val cleanJson = jsonText
-            .trim()
-            .removePrefix("```json")
-            .removePrefix("```")
-            .removeSuffix("```")
-            .trim()
-
-        return try {
-            val array = JSONArray(cleanJson)
-            (0 until array.length()).map { i ->
-                val obj = array.getJSONObject(i)
-                Recomendacion(
-                    tipo = try {
-                        TipoRecomendacion.valueOf(obj.getString("tipo"))
-                    } catch (_: Exception) {
-                        TipoRecomendacion.RECURSO
-                    },
-                    titulo = obj.getString("titulo"),
-                    descripcion = obj.getString("descripcion"),
-                    url = obj.getString("url"),
-                    autor = obj.optString("autor", null)
-                        ?.takeIf { it != "null" && it.isNotBlank() }
-                )
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Error al parsear recomendaciones: $cleanJson")
-            emptyList()
-        }
+    /**
+     * Extrae el primer array JSON [...] del texto, descartando
+     * markdown fences u otro texto antes/después.
+     */
+    private fun extractJsonArray(text: String): String {
+        val trimmed = text.trim()
+            .removePrefix("```json").removePrefix("```")
+            .removeSuffix("```").trim()
+        val start = trimmed.indexOf('[')
+        val end = trimmed.lastIndexOf(']')
+        if (start != -1 && end > start) return trimmed.substring(start, end + 1)
+        return trimmed
     }
+}
+
+/** Excepción estructurada para errores HTTP de API de IA. */
+private class AiApiException(
+    val statusCode: Int,
+    val body: String,
+    provider: String
+) : Exception("$provider API error $statusCode: ${body.take(300)}") {
+    val isAuthError: Boolean get() =
+        body.contains("API_KEY_INVALID", true) ||
+        body.contains("PERMISSION_DENIED", true) ||
+        body.contains("invalid_api_key", true) ||
+        body.contains("Unauthorized", true) ||
+        statusCode == 401 || statusCode == 403
+    val isNotFound: Boolean get() =
+        statusCode == 404 ||
+        body.contains("not found", true) ||
+        body.contains("is not supported", true) ||
+        body.contains("does not exist", true)
 }

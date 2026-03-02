@@ -81,9 +81,11 @@ class CreateMateriaViewModel @Inject constructor(
     }
 
     fun updateComponentePorcentaje(index: Int, porcentaje: Float) = _wizardState.update { state ->
+        // Redondear a múltiplos de 1% para evitar imprecisión de punto flotante
+        val snapped = kotlin.math.round(porcentaje * 100f) / 100f
         state.copy(
             componentes = state.componentes.toMutableList().apply {
-                this[index] = this[index].copy(porcentaje = porcentaje)
+                this[index] = this[index].copy(porcentaje = snapped)
             }
         )
     }
@@ -194,7 +196,7 @@ data class ComponenteInput(
     val nombre: String = "",
     val porcentaje: Float = 0f
 ) {
-    val porcentajeDisplay: Int get() = (porcentaje * 100).toInt()
+    val porcentajeDisplay: Int get() = kotlin.math.round(porcentaje * 100).toInt()
 }
 
 sealed class SaveState {

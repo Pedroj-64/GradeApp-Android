@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+# Clave de API de Gemini (variable de entorno preferible en producción)
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: gemini-1.5-flash
+  fallback-models:
+    - gemini-1.5-pro
+    - gemini-pro
+
+# Rate limiting
+rate-limit:
+  requests-per-minute: 30
+  burst-capacity: 5
+
+logging:
+  level:
+    com.gradify: DEBUG
+    root: INFO

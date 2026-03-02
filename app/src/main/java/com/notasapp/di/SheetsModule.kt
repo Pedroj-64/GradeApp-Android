@@ -9,11 +9,10 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Módulo Hilt para el subsistema de Google Sheets.
+ * Módulo Hilt para el subsistema de exportación a Google Drive.
  *
  * Vincula la interfaz [SheetsRepository] con su implementación concreta
- * [SheetsRepositoryImpl]. [SheetsService] es `@Singleton` y se inyecta
- * directamente vía constructor, por lo que no requiere @Provides manual.
+ * [SheetsRepositoryImpl], que genera .xlsx y lo sube a Drive.
  */
 @Module
 @InstallIn(SingletonComponent::class)

@@ -121,7 +121,7 @@ fun EditPorcentajesScreen(
                 MaterialTheme.colorScheme.error
 
             Text(
-                text = "Total: ${(sumaTotal * 100).toInt()}%  " +
+                text = "Total: ${kotlin.math.round(sumaTotal * 100).toInt()}%  " +
                         if (kotlin.math.abs(sumaTotal - 1f) <= 0.01f) "✓" else "≠ 100%",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -201,7 +201,7 @@ fun EditPorcentajesScreen(
                                     )
 
                                     Text(
-                                        text = "${(componente.porcentaje * 100).toInt()}%",
+                                        text = "${kotlin.math.round(componente.porcentaje * 100).toInt()}%",
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -214,7 +214,7 @@ fun EditPorcentajesScreen(
                                         viewModel.onPorcentajeChange(componente.id, nuevoPct)
                                     },
                                     valueRange = 0f..1f,
-                                    steps = 19,
+                                    steps = 99,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }

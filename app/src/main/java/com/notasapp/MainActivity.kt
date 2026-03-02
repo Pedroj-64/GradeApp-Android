@@ -1,9 +1,9 @@
 package com.notasapp
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,7 +32,7 @@ import javax.inject.Inject
  * El SplashScreen se mantiene visible mientras se resuelve el destino.
  */
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var userPrefsRepository: UserPreferencesRepository
@@ -52,7 +52,9 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val email = userPrefsRepository.userEmail.first()
             startDestination = if (!email.isNullOrBlank()) {
-                Screen.Home.route
+                // Si ya vio el onboarding → Main; si no → Onboarding
+                val hasOnboarding = userPrefsRepository.hasSeenOnboarding.first()
+                if (hasOnboarding) Screen.Main.route else Screen.Onboarding.route
             } else {
                 Screen.Login.route
             }

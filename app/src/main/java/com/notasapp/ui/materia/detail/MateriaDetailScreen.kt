@@ -1,8 +1,13 @@
 package com.notasapp.ui.materia.detail
 
 import java.util.Locale
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +32,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -56,10 +62,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notasapp.R
 import com.notasapp.domain.model.Componente
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.SubNota
@@ -99,6 +107,7 @@ fun MateriaDetailScreen(
     onBack: () -> Unit,
     onEditPorcentajes: () -> Unit,
     onExport: () -> Unit,
+    onNavigateToRecomendaciones: () -> Unit = {},
     viewModel: MateriaDetailViewModel = hiltViewModel()
 ) {
     val materia by viewModel.materia.collectAsState()
@@ -132,7 +141,7 @@ fun MateriaDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                     }
                 },
                 actions = {
@@ -142,14 +151,21 @@ fun MateriaDetailScreen(
                         } == true
                     ) {
                         IconButton(onClick = { showQuickEntry = true }) {
-                            Icon(Icons.Default.FlashOn, contentDescription = "Entrada rápida")
+                            Icon(Icons.Default.FlashOn, contentDescription = stringResource(R.string.detail_quick_entry))
                         }
                     }
+                    IconButton(onClick = onNavigateToRecomendaciones) {
+                        Icon(
+                            Icons.Default.Lightbulb,
+                            contentDescription = stringResource(R.string.detail_study_resources),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(onClick = onEditPorcentajes) {
-                        Icon(Icons.Default.Edit, contentDescription = "Editar porcentajes")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.detail_edit_percentages))
                     }
                     IconButton(onClick = onExport) {
-                        Icon(Icons.Default.Share, contentDescription = "Exportar")
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.detail_export))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -165,7 +181,7 @@ fun MateriaDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Calculate,
-                        contentDescription = "¿Qué nota necesito?",
+                        contentDescription = stringResource(R.string.detail_what_grade_needed),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -187,11 +203,22 @@ fun MateriaDetailScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
                         PromedioResumen(materia = mat)
+                    }
+
+                    // ── Sección: Evaluaciones ──────────────────────
+                    item {
+                        Text(
+                            text = stringResource(R.string.detail_evaluations),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                     items(mat.componentes, key = { it.id }) { componente ->
                         ComponenteCard(
@@ -272,6 +299,7 @@ private fun PromedioResumen(
         // ── Card principal de promedio ────────────────────────────
         Card(
             modifier = Modifier.fillMaxWidth(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (materia.aprobado)
                     MaterialTheme.colorScheme.secondaryContainer
@@ -282,13 +310,13 @@ private fun PromedioResumen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Gauge animado
                 PromedioGauge(
-                    promedio = materia.promedio ?: 0f,
+                    promedio = materia.promedio,
                     escalaMin = materia.escalaMin,
                     escalaMax = materia.escalaMax,
                     aprobacion = materia.notaAprobacion,
@@ -299,7 +327,7 @@ private fun PromedioResumen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Promedio actual",
+                        text = stringResource(R.string.promedio_actual),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -311,7 +339,7 @@ private fun PromedioResumen(
                     Spacer(Modifier.height(4.dp))
                     EstadoBadge(
                         aprobado = materia.aprobado,
-                        texto = if (materia.aprobado) "APROBADO" else "EN RIESGO"
+                        texto = if (materia.aprobado) stringResource(R.string.estado_aprobado) else stringResource(R.string.estado_en_riesgo)
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -323,11 +351,12 @@ private fun PromedioResumen(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // ── Card de progreso acumulado ────────────────────────────
         Card(
             modifier = Modifier.fillMaxWidth(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             )
@@ -342,7 +371,7 @@ private fun PromedioResumen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Acumulado",
+                        text = stringResource(R.string.detail_accumulated),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -363,7 +392,7 @@ private fun PromedioResumen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Evaluado: ${(materia.porcentajeEvaluado * 100).toInt()}%",
+                        text = "Evaluado: ${kotlin.math.round(materia.porcentajeEvaluado * 100).toInt()}%",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -380,37 +409,50 @@ private fun PromedioResumen(
 
         // ── Mensaje motivacional según progreso ──────────────────
         val mensajeMotivacional = getMensajeMotivacional(materia)
-        if (mensajeMotivacional != null) {
-            Spacer(Modifier.height(8.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+        AnimatedVisibility(
+            visible = mensajeMotivacional != null,
+            enter = expandVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
                 )
-            ) {
-                Row(
+            ) + fadeIn()
+        ) {
+            if (mensajeMotivacional != null) {
+                Spacer(Modifier.height(12.dp))
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .animateContentSize(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    )
                 ) {
-                    Text(
-                        text = mensajeMotivacional.first,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        text = mensajeMotivacional.second,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = mensajeMotivacional.first,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = mensajeMotivacional.second,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
         }
 
         // ── Banner de felicitación ──────────────────────────────
         if (materia.yaAprobo && !materia.completa) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -530,12 +572,13 @@ private fun ComponenteCard(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(tween(250)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             // ── Header del componente ──────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -581,7 +624,7 @@ private fun ComponenteCard(
             Spacer(Modifier.height(8.dp))
             GradeLinearIndicator(progreso = progress)
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
 
             componente.subNotas.forEach { subNota ->
                 SubNotaRow(
@@ -593,7 +636,7 @@ private fun ComponenteCard(
                     onActualizarDetalle = onActualizarDetalle,
                     onEliminarDetalle = onEliminarDetalle
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             // Botón agregar nota al corte
@@ -607,7 +650,7 @@ private fun ComponenteCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Agregar nota", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.detail_add_grade), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -679,7 +722,7 @@ private fun SubNotaRow(
                 ) {
                     Icon(
                         imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (expanded) "Contraer detalles" else "Ver detalles"
+                        contentDescription = if (expanded) stringResource(R.string.detail_collapse) else stringResource(R.string.detail_expand)
                     )
                 }
             } else {
@@ -712,7 +755,7 @@ private fun SubNotaRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar nota",
+                    contentDescription = stringResource(R.string.detail_delete_grade),
                     tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(18.dp)
                 )
@@ -750,7 +793,7 @@ private fun SubNotaRow(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("Agregar elemento", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.detail_add_element), style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
@@ -812,7 +855,7 @@ private fun DetalleRow(
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = "${(detalle.porcentaje * 100).toInt()}%",
+                text = "${kotlin.math.round(detalle.porcentaje * 100).toInt()}%",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -845,7 +888,7 @@ private fun DetalleRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "Eliminar",
+                contentDescription = stringResource(R.string.btn_delete),
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(16.dp)
             )
@@ -872,7 +915,7 @@ private fun AgregarDetalleDialog(
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
-                    label = { Text("Descripción") },
+                    label = { Text(stringResource(R.string.detail_description)) },
                     placeholder = { Text("Ej: Primer intento") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -894,10 +937,10 @@ private fun AgregarDetalleDialog(
                     onAgregar(descripcion.trim(), p / 100f)
                 },
                 enabled = valido
-            ) { Text("Agregar") }
+            ) { Text(stringResource(R.string.detail_add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) }
         }
     )
 }
@@ -946,7 +989,7 @@ private fun QuickEntryBottomSheet(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Entrada rápida",
+                    text = stringResource(R.string.detail_quick_entry),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -1063,7 +1106,7 @@ private fun AgregarSubNotaDialog(
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
-                    label = { Text("Descripción") },
+                    label = { Text(stringResource(R.string.detail_description)) },
                     placeholder = { Text("Ej: Parcial 1") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -1085,10 +1128,10 @@ private fun AgregarSubNotaDialog(
                     onAgregar(descripcion.trim(), p / 100f)
                 },
                 enabled = valido
-            ) { Text("Agregar") }
+            ) { Text(stringResource(R.string.detail_add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) }
         }
     )
 }

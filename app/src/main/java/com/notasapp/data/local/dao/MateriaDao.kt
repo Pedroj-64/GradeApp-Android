@@ -51,6 +51,14 @@ interface MateriaDao {
     @Query("SELECT * FROM materias WHERE id = :id")
     fun getMateriaConComponentes(id: Long): Flow<MateriaConComponentes?>
 
+    /**
+     * Retorna todas las materias del usuario CON componentes y sub-notas (Flow).
+     * Se usa en Home para calcular promedio correctamente.
+     */
+    @Transaction
+    @Query("SELECT * FROM materias WHERE usuarioId = :usuarioId ORDER BY periodo DESC, nombre ASC")
+    fun getMateriasConComponentesByUsuario(usuarioId: String): Flow<List<MateriaConComponentes>>
+
     /** Total de materias del usuario (para mostrar badge en Home). */
     @Query("SELECT COUNT(*) FROM materias WHERE usuarioId = :usuarioId")
     fun countByUsuario(usuarioId: String): Flow<Int>

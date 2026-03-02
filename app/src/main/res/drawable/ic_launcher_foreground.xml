@@ -1,8 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-    Icono de primer plano del adaptive launcher icon.
-    Grafico de barras ascendentes con estrella - representa progreso academico.
-    Disenado para la zona segura 66x66dp dentro del marco de 108x108dp.
+    Gradify – Adaptive icon foreground.
+    Concepto: Birrete de graduación moderno con línea ascendente integrada
+    que forma una "G" implícita. Comunica "progreso académico" de un vistazo.
+    Zona segura: 66×66dp centrado en 108×108dp.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,31 +11,105 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Barra 1: corta, izquierda -->
+    <!-- ═══ BIRRETE (tapa cuadrada inclinada) ═══ -->
+    <!-- Sombra sutil de la tapa -->
+    <path
+        android:fillColor="#1A000000"
+        android:pathData="M54,34 L82,44 L54,54 L26,44 Z"
+        android:fillAlpha="0.15" />
+
+    <!-- Tapa principal — rombo con perspectiva -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M26,73 L26,61 Q26,58 29,58 L35,58 Q38,58 38,61 L38,73 Z" />
+        android:pathData="M54,31 L83,42 L54,53 L25,42 Z" />
 
-    <!-- Barra 2: mediana, centro -->
+    <!-- Banda frontal de la tapa (profundidad 3D) -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M25,42 L54,53 L54,56 L25,45 Z" />
+    <path
+        android:fillColor="#EEEEEE"
+        android:pathData="M54,53 L83,42 L83,45 L54,56 Z" />
+
+    <!-- ═══ BASE DEL BIRRETE ═══ -->
+    <!-- Banda inferior semicircular (la parte que va en la cabeza) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M46,73 L46,49 Q46,46 49,46 L55,46 Q58,46 58,49 L58,73 Z" />
+        android:pathData="M35,48 L35,56 Q35,63 54,63 Q73,63 73,56 L73,48 L54,56 Z" />
 
-    <!-- Barra 3: alta, derecha -->
+    <!-- Línea decorativa en la banda -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M66,73 L66,35 Q66,32 69,32 L75,32 Q78,32 78,35 L78,73 Z" />
+        android:strokeColor="#E0E0E0"
+        android:strokeWidth="0.8"
+        android:pathData="M38,55 Q54,61 70,55" />
 
-    <!-- Linea base -->
+    <!-- ═══ BORLA (tassel) ═══ -->
+    <!-- Hilo de la borla, curva elegante desde el centro de la tapa -->
     <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3.5"
+        android:strokeColor="#FFD54F"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M22,73 L86,73" />
+        android:fillColor="#00000000"
+        android:pathData="M54,42 Q58,42 62,48 Q66,54 68,62" />
 
-    <!-- Estrella dorada sobre la barra 3 -->
+    <!-- Nudo central (botón del birrete) -->
+    <group>
+        <path
+            android:fillColor="#FFD54F"
+            android:pathData="M54,42 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0" />
+    </group>
+
+    <!-- Borla (pompón dorado) -->
     <path
         android:fillColor="#FFD54F"
-        android:pathData="M72,17 L74.2,22.5 L80,22.5 L75.4,25.9 L77.6,31.4 L72,28 L66.4,31.4 L68.6,25.9 L64,22.5 L69.8,22.5 Z" />
+        android:pathData="M68,62 m-4,0 a4,4.5 0 1,1 8,0 a4,4.5 0 1,1 -8,0" />
+    <!-- Detalle de la borla (hilos) -->
+    <path
+        android:strokeColor="#FFC107"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M66,65 L66,69" />
+    <path
+        android:strokeColor="#FFC107"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M68,65.5 L68,70" />
+    <path
+        android:strokeColor="#FFC107"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M70,65 L70,69" />
+
+    <!-- ═══ GRÁFICA ASCENDENTE (debajo del birrete) ═══ -->
+    <!-- Línea de progreso: tres puntos ascendentes conectados -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M30,80 L42,74 L54,76 L66,68 L78,60" />
+
+    <!-- Puntos en los nodos de la gráfica -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M30,80 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M42,74 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M54,76 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M66,68 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,60 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0" />
+
+    <!-- Flecha ascendente en el último punto -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76,55 L78,50 L80,55 Z" />
 
 </vector>

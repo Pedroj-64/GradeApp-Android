@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Fondo degradado para el widget de materia individual.
+    Tonos verde-esmeralda para contrastar con el widget de promedio.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <gradient
+        android:startColor="#FF2E7D32"
+        android:endColor="#FF1B5E20"
+        android:angle="135"
+        android:type="linear" />
+
+    <corners android:radius="20dp" />
+
+</shape>

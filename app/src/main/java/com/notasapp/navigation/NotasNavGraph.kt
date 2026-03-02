@@ -9,19 +9,20 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.notasapp.ui.auth.LoginScreen
 import com.notasapp.ui.export.ExportScreen
-import com.notasapp.ui.home.HomeScreen
+import com.notasapp.ui.main.MainScaffold
 import com.notasapp.ui.materia.create.CreateMateriaWizard
 import com.notasapp.ui.materia.detail.MateriaDetailScreen
 import com.notasapp.ui.materia.edit.EditPorcentajesScreen
+import com.notasapp.ui.onboarding.OnboardingScreen
 import com.notasapp.ui.recomendaciones.RecomendacionesScreen
-import com.notasapp.ui.settings.SettingsScreen
-import com.notasapp.ui.stats.EstadisticasScreen
 
 /**
  * Grafo de navegación principal de NotasApp.
  *
  * Define todas las rutas y sus pantallas destino. La ruta inicial es
- * [Screen.Login]; una vez autenticado, el usuario navega a [Screen.Home].
+ * [Screen.Login]; una vez autenticado, el usuario navega a [Screen.Main],
+ * que aloja la barra de navegación inferior con las cuatro secciones
+ * principales (Inicio, Estadísticas, Recursos, Ajustes).
  */
 @Composable
 fun NotasNavGraph(
@@ -37,30 +38,37 @@ fun NotasNavGraph(
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        // ── Home ─────────────────────────────────────────────────
-        composable(Screen.Home.route) {
-            HomeScreen(
+        // ── Onboarding (tutorial de primer uso) ─────────────────
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onFinish = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ── Main (Bottom Nav: Home / Estadísticas / Recursos / Ajustes) ──
+        composable(Screen.Main.route) {
+            MainScaffold(
                 onNavigateToCreateMateria = {
                     navController.navigate(Screen.CreateMateriaBasicInfo.route)
                 },
                 onNavigateToMateria = { materiaId ->
                     navController.navigate(Screen.MateriaDetail.createRoute(materiaId))
                 },
-                onNavigateToEstadisticas = {
-                    navController.navigate(Screen.Estadisticas.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
-                },
-                onNavigateToRecomendaciones = {
-                    navController.navigate(Screen.Recomendaciones.route)
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -69,9 +77,7 @@ fun NotasNavGraph(
         composable(Screen.CreateMateriaBasicInfo.route) {
             CreateMateriaWizard(
                 onWizardComplete = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = false }
-                    }
+                    navController.popBackStack()
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -98,6 +104,9 @@ fun NotasNavGraph(
                 },
                 onExport = {
                     navController.navigate(Screen.Export.createRoute(materiaId))
+                },
+                onNavigateToRecomendaciones = {
+                    navController.navigate(Screen.RecomendacionesMateria.createRoute(materiaId))
                 }
             )
         }
@@ -140,29 +149,18 @@ fun NotasNavGraph(
             )
         }
 
-        // ── Estadísticas ──────────────────────────────────────────
-        composable(Screen.Estadisticas.route) {
-            EstadisticasScreen(
-                onNavigateBack = { navController.popBackStack() }
+        // ── Recomendaciones desde MateriaDetail (materia preseleccionada) ──────
+        composable(
+            route = Screen.RecomendacionesMateria.route,
+            arguments = listOf(
+                navArgument(Screen.RecomendacionesMateria.ARG_MATERIA_ID) {
+                    type = NavType.LongType
+                }
             )
-        }
-
-        // ── Recomendaciones ───────────────────────────────────────
-        composable(Screen.Recomendaciones.route) {
+        ) {
             RecomendacionesScreen(
                 onBack = { navController.popBackStack() }
             )
         }
-
-        // ── Configuración ───────────────────────────────────────────
-        composable(Screen.Settings.route) {
-            SettingsScreen(
-                onBack   = { navController.popBackStack() },
-                onLogout = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
-        }    }
+    }
 }

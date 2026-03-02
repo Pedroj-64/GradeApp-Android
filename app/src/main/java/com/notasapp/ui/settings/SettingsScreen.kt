@@ -3,6 +3,7 @@ package com.notasapp.ui.settings
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
@@ -56,9 +58,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notasapp.R
 import com.notasapp.domain.model.ConfiguracionNota
 import com.notasapp.domain.model.ModoRedondeo
 import java.text.SimpleDateFormat
@@ -98,7 +103,7 @@ fun SettingsScreen(
     // Lanzar el share intent en cuanto esté disponible
     LaunchedEffect(uiState.shareIntent) {
         uiState.shareIntent?.let { intent ->
-            context.startActivity(Intent.createChooser(intent, "Compartir backup"))
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.settings_share_backup)))
             viewModel.clearMessages()
         }
     }
@@ -113,10 +118,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Configuración") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -137,24 +142,24 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
 
             // ── Sección: Datos y Backup ───────────────────────────────────────
-            SettingsSection(title = "Datos y Backup") {
+            SettingsSection(title = stringResource(R.string.settings_data_backup)) {
 
                 SettingsActionCard(
                     icon      = Icons.Default.Backup,
-                    title     = "Exportar backup",
+                    title     = stringResource(R.string.settings_export_backup),
                     subtitle  = uiState.lastSyncMs?.let {
                         "Última exportación: ${formatDate(it)}"
-                    } ?: "Guarda todas tus notas en un archivo JSON",
-                    ctaLabel  = "Exportar",
+                    } ?: stringResource(R.string.settings_export_subtitle),
+                    ctaLabel  = stringResource(R.string.settings_export_cta),
                     isLoading = uiState.isLoading,
                     onClick   = { viewModel.exportarBackup() }
                 )
 
                 SettingsActionCard(
                     icon        = Icons.Default.CloudDownload,
-                    title       = "Restaurar backup",
-                    subtitle    = "Importa notas desde un archivo .json\nexportado previamente",
-                    ctaLabel    = "Seleccionar archivo",
+                    title       = stringResource(R.string.settings_restore_backup),
+                    subtitle    = stringResource(R.string.settings_restore_subtitle),
+                    ctaLabel    = stringResource(R.string.settings_select_file),
                     isLoading   = false,
                     onClick     = {
                         openFileLauncher.launch(arrayOf("application/json", "*/*"))
@@ -165,7 +170,7 @@ fun SettingsScreen(
             HorizontalDivider()
 
             // ── Sección: Notas y Redondeo ──────────────────────────────────
-            SettingsSection(title = "Notas y Redondeo") {
+            SettingsSection(title = stringResource(R.string.settings_notes_rounding)) {
                 RedondeoConfigCard(
                     config = uiState.configuracionNota,
                     onConfigChange = { viewModel.updateConfiguracionNota(it) }
@@ -173,8 +178,15 @@ fun SettingsScreen(
             }
 
             HorizontalDivider()
+
+            // ── Sección: Idioma ───────────────────────────────────────────────────
+            SettingsSection(title = stringResource(R.string.settings_language)) {
+                LanguageSelectorCard()
+            }
+
+            HorizontalDivider()
             // ── Sección: Cuenta ───────────────────────────────────────────────────
-            SettingsSection(title = "Cuenta") {
+            SettingsSection(title = stringResource(R.string.settings_account)) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors   = CardDefaults.cardColors(
@@ -194,12 +206,12 @@ fun SettingsScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text       = "Cerrar sesión",
+                                text       = stringResource(R.string.settings_logout),
                                 style      = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text  = "Regresa a la pantalla de inicio de sesión",
+                                text  = stringResource(R.string.settings_back_to_login),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -217,7 +229,7 @@ fun SettingsScreen(
                                     contentColor = MaterialTheme.colorScheme.error
                                 )
                             ) {
-                                Text("Salir")
+                                Text(stringResource(R.string.settings_exit))
                             }
                         }
                     }
@@ -225,7 +237,7 @@ fun SettingsScreen(
             }
             HorizontalDivider()
             // ── Sección: Acerca de ────────────────────────────────────────────
-            SettingsSection(title = "Acerca de") {
+            SettingsSection(title = stringResource(R.string.settings_about)) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors   = CardDefaults.cardColors(
@@ -243,12 +255,12 @@ fun SettingsScreen(
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text       = "Gradify",
+                                    text       = stringResource(R.string.app_name),
                                     style      = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text  = "Versión 1.9.0",
+                                    text  = stringResource(R.string.settings_version, "2.0.0"),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -256,7 +268,7 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            text  = "Gestiona tus notas académicas de forma inteligente y offline-first. Sincroniza con Google Sheets cuando lo necesites.",
+                            text  = stringResource(R.string.settings_app_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -293,10 +305,10 @@ fun SettingsScreen(
                     tint               = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Cerrar sesión") },
+            title = { Text(stringResource(R.string.settings_logout)) },
             text  = {
                 Text(
-                    "¿Seguro que deseas salir? Tus notas quedarán guardadas localmente."
+                    stringResource(R.string.settings_logout_confirm)
                 )
             },
             confirmButton = {
@@ -306,12 +318,12 @@ fun SettingsScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Cerrar sesión")
+                    Text(stringResource(R.string.settings_logout))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissLogoutDialog() }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -391,7 +403,84 @@ private fun SettingsActionCard(
     }
 }
 
-private fun formatDate(ms: Long): String =
+// ── Selector de idioma ─────────────────────────────────────────────────────
+
+private data class LanguageOption(val tag: String, val label: String)
+
+@Composable
+private fun LanguageSelectorCard(modifier: Modifier = Modifier) {
+    val systemLabel = stringResource(R.string.settings_language_system)
+    val options = remember(systemLabel) {
+        listOf(
+            LanguageOption("",   systemLabel),
+            LanguageOption("es", "Español"),
+            LanguageOption("en", "English")
+        )
+    }
+
+    // Resolve current selection
+    val currentLocales = AppCompatDelegate.getApplicationLocales()
+    val currentTag = if (currentLocales.isEmpty) "" else currentLocales.get(0)?.language ?: ""
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Language,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.settings_language),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+
+            options.forEach { option ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val locales = if (option.tag.isEmpty()) {
+                                LocaleListCompat.getEmptyLocaleList()
+                            } else {
+                                LocaleListCompat.forLanguageTags(option.tag)
+                            }
+                            AppCompatDelegate.setApplicationLocales(locales)
+                        }
+                        .padding(vertical = 4.dp)
+                ) {
+                    RadioButton(
+                        selected = currentTag == option.tag,
+                        onClick = {
+                            val locales = if (option.tag.isEmpty()) {
+                                LocaleListCompat.getEmptyLocaleList()
+                            } else {
+                                LocaleListCompat.forLanguageTags(option.tag)
+                            }
+                            AppCompatDelegate.setApplicationLocales(locales)
+                        }
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = option.label,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}private fun formatDate(ms: Long): String =
     SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(ms))
 
 // ── Configuración de redondeo ──────────────────────────────────────────────
@@ -418,7 +507,7 @@ private fun RedondeoConfigCard(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Redondeo de notas",
+                    text = stringResource(R.string.settings_rounding_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -427,7 +516,7 @@ private fun RedondeoConfigCard(
 
             // Decimales
             Text(
-                text = "Decimales a mostrar",
+                text = stringResource(R.string.settings_decimals),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -451,7 +540,7 @@ private fun RedondeoConfigCard(
 
             // Modo de redondeo
             Text(
-                text = "Modo de redondeo",
+                text = stringResource(R.string.settings_rounding_mode),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )

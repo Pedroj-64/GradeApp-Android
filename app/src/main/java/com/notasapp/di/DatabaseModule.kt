@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.notasapp.data.local.AppDatabase
 import com.notasapp.data.local.dao.ComponenteDao
+import com.notasapp.data.local.dao.ExamenEventDao
 import com.notasapp.data.local.dao.MateriaDao
 import com.notasapp.data.local.dao.SubNotaDao
 import com.notasapp.data.local.dao.SubNotaDetailDao
@@ -44,4 +45,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSubNotaDetailDao(db: AppDatabase): SubNotaDetailDao = db.subNotaDetailDao()
+
+    @Provides
+    fun provideExamenEventDao(db: AppDatabase): ExamenEventDao = db.examenEventDao()
 }
