@@ -568,6 +568,8 @@ private fun ComponenteCard(
     modifier: Modifier = Modifier
 ) {
     var mostrarDialogAgregar by remember { mutableStateOf(false) }
+    val porcentajeSubNotasUsado = componente.subNotas
+        .sumOf { it.porcentajeDelComponente.toDouble() }.toFloat()
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -658,6 +660,7 @@ private fun ComponenteCard(
     if (mostrarDialogAgregar) {
         AgregarSubNotaDialog(
             componenteNombre = componente.nombre,
+            porcentajeYaUsado = porcentajeSubNotasUsado,
             onDismiss = { mostrarDialogAgregar = false },
             onAgregar = { desc, pct ->
                 onAgregarSubNota(desc, pct)
@@ -683,6 +686,8 @@ private fun SubNotaRow(
     var textValue by remember(subNota.valor) {
         mutableStateOf(subNota.valor?.toInputString() ?: "")
     }
+    val porcentajeDetallesUsado = subNota.detalles
+        .sumOf { it.porcentaje.toDouble() }.toFloat()
 
     Column(modifier = modifier.fillMaxWidth()) {
         // ── Fila principal de la sub-nota ─────────────────────
@@ -822,6 +827,7 @@ private fun SubNotaRow(
     if (mostrarDialogDetalle) {
         AgregarDetalleDialog(
             subNotaNombre = subNota.descripcion,
+            porcentajeYaUsado = porcentajeDetallesUsado,
             onDismiss = { mostrarDialogDetalle = false },
             onAgregar = { desc, pct ->
                 onAgregarDetalle(desc, pct)
@@ -899,13 +905,15 @@ private fun DetalleRow(
 @Composable
 private fun AgregarDetalleDialog(
     subNotaNombre: String,
+    porcentajeYaUsado: Float = 0f,
     onDismiss: () -> Unit,
     onAgregar: (descripcion: String, porcentaje: Float) -> Unit
 ) {
     var descripcion by remember { mutableStateOf("") }
-    var porcentajeText by remember { mutableStateOf("100") }
+    val disponible = (100f - porcentajeYaUsado * 100f).coerceIn(0f, 100f)
+    var porcentajeText by remember { mutableStateOf(disponible.toInt().toString()) }
     val pct = porcentajeText.parseGrade()
-    val valido = descripcion.isNotBlank() && pct != null && pct in 1f..100f
+    val valido = descripcion.isNotBlank() && pct != null && pct in 1f..disponible.coerceAtLeast(1f)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -926,7 +934,17 @@ private fun AgregarDetalleDialog(
                     label = { Text("Peso (% dentro de la actividad)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    supportingText = {
+                        Text(
+                            text = "Disponible: ${disponible.toInt()}%",
+                            color = if (pct != null && pct > disponible)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    isError = pct != null && pct > disponible
                 )
             }
         },
@@ -1090,13 +1108,15 @@ private fun QuickEntryRow(
 @Composable
 private fun AgregarSubNotaDialog(
     componenteNombre: String,
+    porcentajeYaUsado: Float = 0f,
     onDismiss: () -> Unit,
     onAgregar: (descripcion: String, porcentaje: Float) -> Unit
 ) {
     var descripcion by remember { mutableStateOf("") }
-    var porcentajeText by remember { mutableStateOf("100") }
+    val disponible = (100f - porcentajeYaUsado * 100f).coerceIn(0f, 100f)
+    var porcentajeText by remember { mutableStateOf(disponible.toInt().toString()) }
     val pct = porcentajeText.parseGrade()
-    val valido = descripcion.isNotBlank() && pct != null && pct in 1f..100f
+    val valido = descripcion.isNotBlank() && pct != null && pct in 1f..disponible.coerceAtLeast(1f)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1117,7 +1137,17 @@ private fun AgregarSubNotaDialog(
                     label = { Text("Peso (% del corte)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    supportingText = {
+                        Text(
+                            text = "Disponible: ${disponible.toInt()}%",
+                            color = if (pct != null && pct > disponible)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    isError = pct != null && pct > disponible
                 )
             }
         },

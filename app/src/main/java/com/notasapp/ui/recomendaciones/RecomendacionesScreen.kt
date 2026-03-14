@@ -233,7 +233,7 @@ fun RecomendacionesScreen(
                         item(key = "header_$tipo") {
                             SectionDivider(tipo = tipo, title = titulo)
                         }
-                        itemsIndexed(lista, key = { i, _ -> "${tipo}_$i" }) { i, rec ->
+                        itemsIndexed(lista, key = { _, rec -> "${tipo}_${rec.url}" }) { i, rec ->
                             AnimatedRecomendacionCard(
                                 recomendacion = rec,
                                 index = globalIdx + i,
