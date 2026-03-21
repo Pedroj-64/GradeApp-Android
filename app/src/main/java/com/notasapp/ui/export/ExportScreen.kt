@@ -1,5 +1,7 @@
 package com.notasapp.ui.export
 
+import android.app.Activity
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +73,17 @@ fun ExportScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context    = LocalContext.current
+    val driveAuthLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onDriveAuthResult(result.resultCode == Activity.RESULT_OK)
+    }
+
+    LaunchedEffect(uiState.driveRecoveryIntent) {
+        val intent = uiState.driveRecoveryIntent ?: return@LaunchedEffect
+        viewModel.onDriveRecoveryIntentConsumed()
+        driveAuthLauncher.launch(intent)
+    }
 
     // Launcher SAF: el usuario elige dónde guardar el .xlsx
     val createDocumentLauncher = rememberLauncherForActivityResult(
@@ -95,7 +108,7 @@ fun ExportScreen(
                 snackbarHostState.showSnackbar(context.getString(R.string.export_file_saved))
 
             uiState.exportError != null ->
-                snackbarHostState.showSnackbar("⚠ ${uiState.exportError}")
+                snackbarHostState.showSnackbar(uiState.exportError ?: "")
         }
         viewModel.clearMessages()
     }
@@ -202,10 +215,20 @@ fun ExportScreen(
                 isDone = false,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 onAction = {
-                    // Abre el selector SAF: Google Drive aparece como opcion
-                    createDocumentLauncher.launch(viewModel.sugerirNombreArchivo())
+                    viewModel.exportarDrive()
                 }
             )
+
+            if (!uiState.driveWebLink.isNullOrBlank()) {
+                Button(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uiState.driveWebLink))
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text(stringResource(R.string.export_open_drive))
+                }
+            }
         }
     }
 }
@@ -268,7 +291,7 @@ private fun ExportCard(
                 } else {
                     Icon(actionIcon, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text(actionLabel ?: "Procesando…")
+                    Text(actionLabel ?: stringResource(R.string.export_processing))
                 }
             }
         }

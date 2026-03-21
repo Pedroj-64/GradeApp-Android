@@ -117,6 +117,7 @@
     <string name="export_completed">Completed</string>
     <string name="export_my_notes">My grades on Google Drive</string>
     <string name="export_file_saved">✓ File saved successfully!</string>
+    <string name="export_processing">Processing…</string>
 
     <!-- General errors -->
     <string name="error_generic">An unexpected error occurred. Please try again.</string>
@@ -142,6 +143,39 @@
     <string name="calendar_2h">2 hours before</string>
     <string name="calendar_1d">1 day before</string>
     <string name="calendar_2d">2 days before</string>
+
+    <!-- Event types -->
+    <string name="tipo_evento_parcial">Midterm</string>
+    <string name="tipo_evento_final">Final</string>
+    <string name="tipo_evento_quiz">Quiz</string>
+    <string name="tipo_evento_tarea">Assignment</string>
+    <string name="tipo_evento_proyecto">Project</string>
+    <string name="tipo_evento_exposicion">Presentation</string>
+    <string name="tipo_evento_otro">Other</string>
+
+    <!-- Grading scale types -->
+    <string name="escala_numerico_5">0 to 5</string>
+    <string name="escala_numerico_10">0 to 10</string>
+    <string name="escala_numerico_100">0 to 100</string>
+    <string name="escala_letras">Letters (A-D)</string>
+    <string name="escala_personalizado">Custom</string>
+
+    <!-- Rounding modes -->
+    <string name="modo_redondeo_matematico">Mathematical (standard)</string>
+    <string name="modo_redondeo_truncar">Truncate</string>
+    <string name="modo_redondeo_academico">Academic</string>
+
+    <!-- Calendar messages -->
+    <string name="calendar_event_created">Event created</string>
+    <string name="calendar_event_updated_msg">Event updated</string>
+    <string name="calendar_event_deleted_msg">Event deleted</string>
+    <string name="calendar_events_imported">%1$d events imported from Google Calendar</string>
+    <string name="calendar_login_required">You must sign in to import from Google Calendar</string>
+    <string name="calendar_no_title">No title</string>
+
+    <!-- Export -->
+    <string name="export_drive_permission_denied">Google Drive permissions were not granted</string>
+
     <string name="calendar_save">Create</string>
     <string name="calendar_update">Save</string>
     <string name="calendar_cancel">Cancel</string>
@@ -161,6 +195,8 @@
     <string name="calendar_delete_confirm">Delete this event? This action cannot be undone.</string>
     <string name="calendar_edit">Edit</string>
     <string name="calendar_1h_plus">+1h</string>
+    <string name="calendar_1h_minus">-1h</string>
+    <string name="calendar_n_min_before">%1$d min before</string>
     <string name="calendar_import_gcal">Import Google Calendar</string>
     <string name="calendar_day_mon">Mon</string>
     <string name="calendar_day_tue">Tue</string>
@@ -204,6 +240,13 @@
     <string name="settings_exit">Exit</string>
     <string name="settings_share_backup">Share backup</string>
     <string name="settings_app_description">Manage your academic grades intelligently. Made with ❤️ for students.</string>
+    <string name="settings_last_export">Last export: %1$s</string>
+    <string name="settings_developed_by">Developed by Pedro Jose Soto Rivera, MargaDev-Society and collaborators</string>
+    <string name="settings_acknowledgements">Special thanks to the testers and collaborators who made this app possible.
+
+Thank you for using Gradify!
+
+Dedicated to miripili &lt;3</string>
 
     <!-- AI Recommendations -->
     <string name="recommendations_title">Recommendations</string>
@@ -227,6 +270,19 @@
     <string name="recs_will_generate">Gemini will generate personalized resources for you</string>
     <string name="recs_no_subjects">No subjects yet</string>
     <string name="recs_no_subjects_hint">Add your first subject and come back here for personalized recommendations</string>
+    <string name="recs_key_setup_steps">1. Get your free key at aistudio.google.com/app/apikey
+2. Add in local.properties: GEMINI_API_KEY=your_key
+3. Rebuild the app</string>
+
+    <string name="detail_elements_of">Items in "%1$s"</string>
+    <string name="detail_example_first_attempt">E.g.: First attempt</string>
+    <string name="detail_weight_in_activity">Weight (%% inside activity)</string>
+    <string name="detail_available_pct">Available: %1$d%%</string>
+    <string name="detail_pending_grades_count">%1$d pending grade(s)</string>
+    <string name="detail_all_grades_entered">All grades are already entered!</string>
+    <string name="detail_add_grade_for_component">Add grade · %1$s</string>
+    <string name="detail_example_partial_1">E.g.: Midterm 1</string>
+    <string name="detail_weight_in_component">Weight (%% of component)</string>
 
     <!-- Simulator -->
     <string name="sim_what_if">What if I score…?</string>
@@ -296,5 +352,26 @@
     <string name="btn_delete">Delete</string>
     <string name="btn_retry">Retry</string>
     <string name="btn_close">Close</string>
+
+    <!-- Goals and subject notes -->
+    <string name="goal_title">Academic goal</string>
+    <string name="goal_set">Set goal</string>
+    <string name="goal_edit">Edit goal</string>
+    <string name="goal_remove">Remove goal</string>
+    <string name="goal_current">Goal: %.1f</string>
+    <string name="goal_needed">You need %.2f in remaining</string>
+    <string name="goal_achieved">Goal achieved!</string>
+    <string name="goal_on_track">You\'re on track</string>
+    <string name="goal_effort_needed">You need to try harder</string>
+    <string name="goal_unreachable">Goal unreachable</string>
+    <string name="goal_no_goal">No goal set</string>
+    <string name="goal_progress">Progress: %d%%</string>
+    <string name="goal_hint">Set the grade you want to achieve in this subject</string>
+
+    <string name="notes_title">Personal notes</string>
+    <string name="notes_add">Add note</string>
+    <string name="notes_edit">Edit note</string>
+    <string name="notes_placeholder">Write your notes here…</string>
+    <string name="notes_hint">Save important information: exam topics, tutoring schedules, etc.</string>
 
 </resources>

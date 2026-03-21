@@ -63,9 +63,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notasapp.BuildConfig
 import com.notasapp.R
 import com.notasapp.domain.model.ConfiguracionNota
 import com.notasapp.domain.model.ModoRedondeo
+import com.notasapp.utils.getDisplayName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -148,7 +150,7 @@ fun SettingsScreen(
                     icon      = Icons.Default.Backup,
                     title     = stringResource(R.string.settings_export_backup),
                     subtitle  = uiState.lastSyncMs?.let {
-                        "Última exportación: ${formatDate(it)}"
+                        stringResource(R.string.settings_last_export, formatDate(it))
                     } ?: stringResource(R.string.settings_export_subtitle),
                     ctaLabel  = stringResource(R.string.settings_export_cta),
                     isLoading = uiState.isLoading,
@@ -260,7 +262,7 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text  = stringResource(R.string.settings_version, "2.0.0"),
+                                    text  = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -276,13 +278,13 @@ fun SettingsScreen(
                         HorizontalDivider()
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            text       = "Desarrollado por Pedro Jose Soto Rivera,MargaDev-Society y Asociados",
+                            text       = stringResource(R.string.settings_developed_by),
                             style      = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color      = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text  = "Agradecimientos especiales a los testers y colaboradores que hicieron posible esta app. \n\n¡Gracias por usar Gradify! \n\n Dedicado a miripili <3",
+                            text  = stringResource(R.string.settings_acknowledgements),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -410,11 +412,14 @@ private data class LanguageOption(val tag: String, val label: String)
 @Composable
 private fun LanguageSelectorCard(modifier: Modifier = Modifier) {
     val systemLabel = stringResource(R.string.settings_language_system)
-    val options = remember(systemLabel) {
+    val esLabel = stringResource(R.string.settings_language_es)
+    val enLabel = stringResource(R.string.settings_language_en)
+
+    val options = remember(systemLabel, esLabel, enLabel) {
         listOf(
             LanguageOption("",   systemLabel),
-            LanguageOption("es", "Español"),
-            LanguageOption("en", "English")
+            LanguageOption("es", esLabel),
+            LanguageOption("en", enLabel)
         )
     }
 
@@ -480,7 +485,9 @@ private fun LanguageSelectorCard(modifier: Modifier = Modifier) {
             }
         }
     }
-}private fun formatDate(ms: Long): String =
+}
+
+private fun formatDate(ms: Long): String =
     SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(ms))
 
 // ── Configuración de redondeo ──────────────────────────────────────────────
@@ -491,6 +498,7 @@ private fun RedondeoConfigCard(
     onConfigChange: (ConfiguracionNota) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -559,7 +567,7 @@ private fun RedondeoConfigCard(
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = modo.displayName,
+                        text = modo.getDisplayName(context),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

@@ -33,6 +33,11 @@ class MateriaRepositoryImpl @Inject constructor(
     private val subNotaDetailDao: SubNotaDetailDao
 ) : MateriaRepository {
 
+    companion object {
+        private const val MAX_PORCENTAJE = 1f
+        private const val EPSILON = 0.0001f
+    }
+
     // ── Materias ────────────────────────────────────────────────
 
     override fun getMateriasByUsuario(usuarioId: String): Flow<List<Materia>> {
@@ -81,11 +86,44 @@ class MateriaRepositoryImpl @Inject constructor(
     // ── Sub-Notas ────────────────────────────────────────────────
 
     override suspend fun insertSubNotas(subNotas: List<SubNota>) {
+        // Validar cada sub-nota individualmente
+        subNotas.forEach { subNota ->
+            require(subNota.porcentajeDelComponente > 0f) {
+                "El porcentaje de la sub-nota debe ser mayor a 0%."
+            }
+            require(subNota.porcentajeDelComponente <= MAX_PORCENTAJE) {
+                "El porcentaje de la sub-nota no puede superar 100%."
+            }
+        }
+
+        // Validar suma por componente (existentes + nuevas)
+        subNotas.groupBy { it.componenteId }.forEach { (componenteId, items) ->
+            val sumaActual = subNotaDao.getSumaPorcentajeByComponente(componenteId)
+            val sumaNueva = items.sumOf { it.porcentajeDelComponente.toDouble() }.toFloat()
+            require(sumaActual + sumaNueva <= MAX_PORCENTAJE + EPSILON) {
+                "La suma de sub-notas no puede superar 100% en el componente."
+            }
+        }
+
         subNotaDao.insertAll(subNotas.map { it.toEntity() })
     }
 
     override suspend fun insertSubNota(subNota: SubNota): Long =
-        subNotaDao.insert(subNota.toEntity())
+        run {
+            require(subNota.porcentajeDelComponente > 0f) {
+                "El porcentaje de la sub-nota debe ser mayor a 0%."
+            }
+            require(subNota.porcentajeDelComponente <= MAX_PORCENTAJE) {
+                "El porcentaje de la sub-nota no puede superar 100%."
+            }
+
+            val sumaActual = subNotaDao.getSumaPorcentajeByComponente(subNota.componenteId)
+            require(sumaActual + subNota.porcentajeDelComponente <= MAX_PORCENTAJE + EPSILON) {
+                "La suma de sub-notas no puede superar 100% en el componente."
+            }
+
+            subNotaDao.insert(subNota.toEntity())
+        }
 
     override suspend fun updateSubNotaValor(subNotaId: Long, valor: Float?) {
         subNotaDao.updateValor(subNotaId, valor)
@@ -103,7 +141,21 @@ class MateriaRepositoryImpl @Inject constructor(
     // ── Sub-Nota Detalles ────────────────────────────────────────
 
     override suspend fun insertSubNotaDetalle(detalle: SubNotaDetalle): Long =
-        subNotaDetailDao.insert(detalle.toEntity())
+        run {
+            require(detalle.porcentaje > 0f) {
+                "El porcentaje del detalle debe ser mayor a 0%."
+            }
+            require(detalle.porcentaje <= MAX_PORCENTAJE) {
+                "El porcentaje del detalle no puede superar 100%."
+            }
+
+            val sumaActual = subNotaDetailDao.getSumaPorcentajeBySubNota(detalle.subNotaId)
+            require(sumaActual + detalle.porcentaje <= MAX_PORCENTAJE + EPSILON) {
+                "La suma de detalles no puede superar 100% en la actividad."
+            }
+
+            subNotaDetailDao.insert(detalle.toEntity())
+        }
 
     override suspend fun updateSubNotaDetalleValor(detalleId: Long, valor: Float?) {
         subNotaDetailDao.updateValor(detalleId, valor)
@@ -118,5 +170,15 @@ class MateriaRepositoryImpl @Inject constructor(
 
     override suspend fun updateSheetsId(materiaId: Long, sheetsId: String?) {
         materiaDao.updateSheetsId(materiaId, sheetsId)
+    }
+
+    // ── Metas y notas ────────────────────────────────────────────
+
+    override suspend fun updateNotaMeta(materiaId: Long, notaMeta: Float?) {
+        materiaDao.updateNotaMeta(materiaId, notaMeta)
+    }
+
+    override suspend fun updateNotas(materiaId: Long, notas: String?) {
+        materiaDao.updateNotas(materiaId, notas)
     }
 }

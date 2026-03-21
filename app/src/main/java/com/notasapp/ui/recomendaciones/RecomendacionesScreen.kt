@@ -620,9 +620,7 @@ private fun ApiKeyMissingBanner() {
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Text(
-                    text = "1. Obtén tu clave gratis en aistudio.google.com/app/apikey\n" +
-                           "2. Agrega en local.properties:  GEMINI_API_KEY=tu_clave\n" +
-                           "3. Recompila la app",
+                    text = stringResource(R.string.recs_key_setup_steps),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                 )

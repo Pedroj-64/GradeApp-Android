@@ -68,6 +68,16 @@ data class MateriaEntity(
     /** ID del Spreadsheet en Google Drive. Null si no está sincronizado. */
     val googleSheetsId: String? = null,
 
+    // ── Metas y notas del usuario ─────────────────────────────
+
+    /** Nota meta que el usuario desea alcanzar en esta materia. Null si no hay meta definida. */
+    val notaMeta: Float? = null,
+
+    /** Notas o comentarios del usuario sobre la materia. */
+    val notas: String? = null,
+
+    // ── Timestamps ────────────────────────────────────────────
+
     /** Timestamp (ms) de la última vez que se actualizó la materia. */
     val ultimaModificacionMs: Long = System.currentTimeMillis(),
 

@@ -33,7 +33,11 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarOutline
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -69,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notasapp.R
 import com.notasapp.domain.model.Componente
+import com.notasapp.domain.model.EstadoMeta
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.SubNota
 import com.notasapp.domain.model.SubNotaDetalle
@@ -118,6 +123,8 @@ fun MateriaDetailScreen(
     // ── Bottom sheet de calculadora ───────────────────────────
     var showCalculadora by rememberSaveable { mutableStateOf(false) }
     var showQuickEntry by rememberSaveable { mutableStateOf(false) }
+    var showMetaDialog by rememberSaveable { mutableStateOf(false) }
+    var showNotasDialog by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val quickEntrySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -210,6 +217,15 @@ fun MateriaDetailScreen(
                         PromedioResumen(materia = mat)
                     }
 
+                    // ── Sección: Meta y Notas ──────────────────────
+                    item {
+                        MetaYNotasSection(
+                            materia = mat,
+                            onEditMeta = { showMetaDialog = true },
+                            onEditNotas = { showNotasDialog = true }
+                        )
+                    }
+
                     // ── Sección: Evaluaciones ──────────────────────
                     item {
                         Text(
@@ -283,6 +299,35 @@ fun MateriaDetailScreen(
                     }
                 },
                 sheetState = quickEntrySheetState
+            )
+        }
+    }
+
+    // ── Diálogo de meta académica ──────────────────────────
+    if (showMetaDialog) {
+        materia?.let { mat ->
+            MetaDialog(
+                currentMeta = mat.notaMeta,
+                escalaMax = mat.escalaMax,
+                onDismiss = { showMetaDialog = false },
+                onSave = { newMeta ->
+                    viewModel.actualizarNotaMeta(newMeta)
+                    showMetaDialog = false
+                }
+            )
+        }
+    }
+
+    // ── Diálogo de notas personales ──────────────────────────
+    if (showNotasDialog) {
+        materia?.let { mat ->
+            NotasDialog(
+                currentNotas = mat.notas,
+                onDismiss = { showNotasDialog = false },
+                onSave = { newNotas ->
+                    viewModel.actualizarNotas(newNotas)
+                    showNotasDialog = false
+                }
             )
         }
     }
@@ -1166,3 +1211,323 @@ private fun AgregarSubNotaDialog(
     )
 }
 
+// ── Sección Meta y Notas ──────────────────────────────────────
+
+@Composable
+private fun MetaYNotasSection(
+    materia: Materia,
+    onEditMeta: () -> Unit,
+    onEditNotas: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Metas y notas",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Card de Meta Académica
+            Card(
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(
+                    containerColor = when (materia.estadoMeta) {
+                        EstadoMeta.ALCANZADA -> MaterialTheme.colorScheme.secondaryContainer
+                        EstadoMeta.EN_CAMINO -> MaterialTheme.colorScheme.primaryContainer
+                        EstadoMeta.REQUIERE_ESFUERZO -> MaterialTheme.colorScheme.tertiaryContainer
+                        EstadoMeta.INALCANZABLE -> MaterialTheme.colorScheme.errorContainer
+                        EstadoMeta.SIN_META -> MaterialTheme.colorScheme.surfaceVariant
+                    }
+                ),
+                onClick = onEditMeta
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = when (materia.estadoMeta) {
+                            EstadoMeta.ALCANZADA -> Icons.Default.Star
+                            EstadoMeta.SIN_META -> Icons.Default.StarOutline
+                            else -> Icons.AutoMirrored.Filled.TrendingUp
+                        },
+                        contentDescription = null,
+                        tint = when (materia.estadoMeta) {
+                            EstadoMeta.ALCANZADA -> MaterialTheme.colorScheme.onSecondaryContainer
+                            EstadoMeta.EN_CAMINO -> MaterialTheme.colorScheme.onPrimaryContainer
+                            EstadoMeta.REQUIERE_ESFUERZO -> MaterialTheme.colorScheme.onTertiaryContainer
+                            EstadoMeta.INALCANZABLE -> MaterialTheme.colorScheme.onErrorContainer
+                            EstadoMeta.SIN_META -> MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = if (materia.tieneMeta) "Meta: ${materia.notaMeta}" else stringResource(R.string.goal_no_goal),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    if (materia.tieneMeta) {
+                        val estadoTexto = when (materia.estadoMeta) {
+                            EstadoMeta.ALCANZADA -> stringResource(R.string.goal_achieved)
+                            EstadoMeta.EN_CAMINO -> stringResource(R.string.goal_on_track)
+                            EstadoMeta.REQUIERE_ESFUERZO -> stringResource(R.string.goal_effort_needed)
+                            EstadoMeta.INALCANZABLE -> stringResource(R.string.goal_unreachable)
+                            else -> ""
+                        }
+                        Text(
+                            text = estadoTexto,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Card de Notas Personales
+            Card(
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (materia.notas?.isNotBlank() == true)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+                onClick = onEditNotas
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Notes,
+                        contentDescription = null,
+                        tint = if (materia.notas?.isNotBlank() == true)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = if (materia.notas?.isNotBlank() == true)
+                            "Tienes notas"
+                        else
+                            "Sin notas",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    if (materia.notas?.isNotBlank() == true) {
+                        Text(
+                            text = materia.notas!!.take(30).let {
+                                if (materia.notas!!.length > 30) "$it..." else it
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = 2
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ── Diálogos ──────────────────────────────────────────────────
+
+@Composable
+private fun MetaDialog(
+    currentMeta: Float?,
+    escalaMax: Float,
+    onDismiss: () -> Unit,
+    onSave: (Float?) -> Unit
+) {
+    var metaText by remember { mutableStateOf(currentMeta?.toInputString() ?: "") }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    val parsedMeta = metaText.parseGrade()
+    val isValid = metaText.isEmpty() || (parsedMeta != null && parsedMeta > 0f && parsedMeta <= escalaMax)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.goal_set)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.goal_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = metaText,
+                    onValueChange = { metaText = it },
+                    label = { Text("Nota meta") },
+                    placeholder = { Text("0.0 - ${escalaMax.toInt()}") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    supportingText = {
+                        if (parsedMeta != null && parsedMeta > escalaMax) {
+                            Text(
+                                text = "Máximo: ${escalaMax.toInt()}",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        } else {
+                            Text("Deja vacío para quitar meta")
+                        }
+                    },
+                    isError = !isValid
+                )
+
+                if (currentMeta != null) {
+                    TextButton(
+                        onClick = { showDeleteConfirm = true },
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text(stringResource(R.string.goal_remove))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val meta = if (metaText.isEmpty()) null else parsedMeta
+                    onSave(meta)
+                },
+                enabled = isValid
+            ) {
+                Text(stringResource(R.string.btn_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.btn_cancel))
+            }
+        }
+    )
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.goal_remove)) },
+            text = { Text("¿Quitar la meta académica?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onSave(null)
+                        showDeleteConfirm = false
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.btn_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun NotasDialog(
+    currentNotas: String?,
+    onDismiss: () -> Unit,
+    onSave: (String?) -> Unit
+) {
+    var notasText by remember { mutableStateOf(currentNotas ?: "") }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.notes_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.notes_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = notasText,
+                    onValueChange = { notasText = it },
+                    label = { Text("Notas") },
+                    placeholder = { Text(stringResource(R.string.notes_placeholder)) },
+                    minLines = 3,
+                    maxLines = 6,
+                    modifier = Modifier.fillMaxWidth(),
+                    supportingText = {
+                        Text("Deja vacío para quitar notas")
+                    }
+                )
+
+                if (!currentNotas.isNullOrBlank()) {
+                    TextButton(
+                        onClick = { showDeleteConfirm = true },
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Eliminar notas")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val notes = notasText.takeIf { it.isNotBlank() }
+                    onSave(notes)
+                }
+            ) {
+                Text(stringResource(R.string.btn_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.btn_cancel))
+            }
+        }
+    )
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Eliminar notas") },
+            text = { Text("¿Eliminar todas las notas personales?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onSave(null)
+                        showDeleteConfirm = false
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.btn_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
+    }
+}

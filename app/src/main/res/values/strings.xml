@@ -123,6 +123,7 @@
     <string name="export_completed">Completado</string>
     <string name="export_my_notes">Mis notas en Google Drive</string>
     <string name="export_file_saved">✓ ¡Archivo guardado correctamente!</string>
+    <string name="export_processing">Procesando…</string>
 
     <!-- Errores generales -->
     <string name="error_generic">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
@@ -153,6 +154,39 @@
     <string name="calendar_2h">2 horas antes</string>
     <string name="calendar_1d">1 día antes</string>
     <string name="calendar_2d">2 días antes</string>
+
+    <!-- Tipos de evento -->
+    <string name="tipo_evento_parcial">Parcial</string>
+    <string name="tipo_evento_final">Final</string>
+    <string name="tipo_evento_quiz">Quiz</string>
+    <string name="tipo_evento_tarea">Tarea</string>
+    <string name="tipo_evento_proyecto">Proyecto</string>
+    <string name="tipo_evento_exposicion">Exposición</string>
+    <string name="tipo_evento_otro">Otro</string>
+
+    <!-- Tipos de escala de notas -->
+    <string name="escala_numerico_5">0 a 5</string>
+    <string name="escala_numerico_10">0 a 10</string>
+    <string name="escala_numerico_100">0 a 100</string>
+    <string name="escala_letras">Letras (A-D)</string>
+    <string name="escala_personalizado">Personalizado</string>
+
+    <!-- Modos de redondeo -->
+    <string name="modo_redondeo_matematico">Matemático (estándar)</string>
+    <string name="modo_redondeo_truncar">Truncar</string>
+    <string name="modo_redondeo_academico">Académico</string>
+
+    <!-- Mensajes de calendario -->
+    <string name="calendar_event_created">Evento creado</string>
+    <string name="calendar_event_updated_msg">Evento actualizado</string>
+    <string name="calendar_event_deleted_msg">Evento eliminado</string>
+    <string name="calendar_events_imported">%1$d eventos importados de Google Calendar</string>
+    <string name="calendar_login_required">Debes iniciar sesión para importar de Google Calendar</string>
+    <string name="calendar_no_title">Sin título</string>
+
+    <!-- Export -->
+    <string name="export_drive_permission_denied">No se concedieron permisos de Google Drive</string>
+
     <string name="calendar_save">Crear</string>
     <string name="calendar_update">Guardar</string>
     <string name="calendar_cancel">Cancelar</string>
@@ -172,6 +206,8 @@
     <string name="calendar_delete_confirm">¿Eliminar este evento? Esta acción no se puede deshacer.</string>
     <string name="calendar_edit">Editar</string>
     <string name="calendar_1h_plus">+1h</string>
+    <string name="calendar_1h_minus">-1h</string>
+    <string name="calendar_n_min_before">%1$d min antes</string>
     <string name="calendar_import_gcal">Importar Google Calendar</string>
     <string name="calendar_day_mon">Lun</string>
     <string name="calendar_day_tue">Mar</string>
@@ -215,6 +251,13 @@
     <string name="settings_exit">Salir</string>
     <string name="settings_share_backup">Compartir backup</string>
     <string name="settings_app_description">Gestiona tus notas académicas de forma inteligente. Desarrollado con ❤️ para estudiantes.</string>
+    <string name="settings_last_export">Última exportación: %1$s</string>
+    <string name="settings_developed_by">Desarrollado por Pedro Jose Soto Rivera, MargaDev-Society y asociados</string>
+    <string name="settings_acknowledgements">Agradecimientos especiales a los testers y colaboradores que hicieron posible esta app.
+
+¡Gracias por usar Gradify!
+
+Dedicado a miripili &lt;3</string>
 
     <!-- Recomendaciones IA -->
     <string name="recommendations_title">Recomendaciones</string>
@@ -238,6 +281,19 @@
     <string name="recs_will_generate">Gemini generará recursos personalizados para ti</string>
     <string name="recs_no_subjects">Aún no tienes materias</string>
     <string name="recs_no_subjects_hint">Agrega tu primera materia y vuelve aquí para obtener recomendaciones personalizadas</string>
+    <string name="recs_key_setup_steps">1. Obtén tu clave gratis en aistudio.google.com/app/apikey
+2. Agrega en local.properties: GEMINI_API_KEY=tu_clave
+3. Recompila la app</string>
+
+    <string name="detail_elements_of">Elementos de «%1$s»</string>
+    <string name="detail_example_first_attempt">Ej: Primer intento</string>
+    <string name="detail_weight_in_activity">Peso (%% dentro de la actividad)</string>
+    <string name="detail_available_pct">Disponible: %1$d%%</string>
+    <string name="detail_pending_grades_count">%1$d nota(s) pendiente(s)</string>
+    <string name="detail_all_grades_entered">¡Todas las notas están ingresadas!</string>
+    <string name="detail_add_grade_for_component">Agregar nota · %1$s</string>
+    <string name="detail_example_partial_1">Ej: Parcial 1</string>
+    <string name="detail_weight_in_component">Peso (%% del corte)</string>
 
     <!-- Simulador -->
     <string name="sim_what_if">¿Qué pasa si saco…?</string>
@@ -307,5 +363,26 @@
     <string name="btn_delete">Eliminar</string>
     <string name="btn_retry">Reintentar</string>
     <string name="btn_close">Cerrar</string>
+
+    <!-- Metas y notas de materia -->
+    <string name="goal_title">Meta académica</string>
+    <string name="goal_set">Definir meta</string>
+    <string name="goal_edit">Editar meta</string>
+    <string name="goal_remove">Quitar meta</string>
+    <string name="goal_current">Meta: %.1f</string>
+    <string name="goal_needed">Necesitas %.2f en lo restante</string>
+    <string name="goal_achieved">¡Meta alcanzada!</string>
+    <string name="goal_on_track">Vas bien encaminado</string>
+    <string name="goal_effort_needed">Necesitas esforzarte más</string>
+    <string name="goal_unreachable">Meta inalcanzable</string>
+    <string name="goal_no_goal">Sin meta definida</string>
+    <string name="goal_progress">Progreso: %d%%</string>
+    <string name="goal_hint">Define la nota que deseas alcanzar en esta materia</string>
+
+    <string name="notes_title">Notas personales</string>
+    <string name="notes_add">Agregar nota</string>
+    <string name="notes_edit">Editar nota</string>
+    <string name="notes_placeholder">Escribe tus notas aquí…</string>
+    <string name="notes_hint">Guarda información importante: temas de examen, horarios de tutoría, etc.</string>
 
 </resources>

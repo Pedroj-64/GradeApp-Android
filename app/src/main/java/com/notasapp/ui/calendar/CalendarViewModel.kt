@@ -1,8 +1,10 @@
 package com.notasapp.ui.calendar
 
+import android.content.Intent
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.notasapp.data.local.UserPreferencesRepository
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.receiver.ExamAlarmScheduler
@@ -50,6 +52,8 @@ data class CalendarUiState(
     val showNotificationPermissionFlow: Boolean = false,
     val isImportingGoogleCalendar: Boolean = false,
     val showGoogleCalendarDialog: Boolean = false,
+    val googleCalendarRecoveryIntent: Intent? = null,
+    val pendingImportMateriaId: Long? = null,
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -345,6 +349,8 @@ class CalendarViewModel @Inject constructor(
                 it.copy(
                     isImportingGoogleCalendar = true,
                     showGoogleCalendarDialog = false,
+                    googleCalendarRecoveryIntent = null,
+                    pendingImportMateriaId = materiaId,
                     error = null
                 )
             }
@@ -375,10 +381,20 @@ class CalendarViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isImportingGoogleCalendar = false,
+                        pendingImportMateriaId = null,
                         successMessage = "$imported eventos importados de Google Calendar"
                     )
                 }
                 Timber.i("Google Calendar: $imported eventos importados")
+            } catch (e: UserRecoverableAuthIOException) {
+                Timber.w(e, "Google Calendar requiere consentimiento OAuth")
+                _uiState.update {
+                    it.copy(
+                        isImportingGoogleCalendar = false,
+                        googleCalendarRecoveryIntent = e.intent,
+                        error = null
+                    )
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Error al importar de Google Calendar")
                 _uiState.update {
@@ -387,6 +403,24 @@ class CalendarViewModel @Inject constructor(
                         error = "[${e.javaClass.simpleName}] ${e.message}"
                     )
                 }
+            }
+        }
+    }
+
+    fun onGoogleCalendarRecoveryIntentConsumed() {
+        _uiState.update { it.copy(googleCalendarRecoveryIntent = null) }
+    }
+
+    fun onGoogleCalendarAuthResult(granted: Boolean) {
+        val materiaId = _uiState.value.pendingImportMateriaId ?: return
+        if (granted) {
+            importFromGoogleCalendar(materiaId)
+        } else {
+            _uiState.update {
+                it.copy(
+                    pendingImportMateriaId = null,
+                    error = "No se concedieron permisos de Google Calendar"
+                )
             }
         }
     }

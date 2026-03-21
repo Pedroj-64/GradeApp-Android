@@ -47,7 +47,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
 import com.notasapp.domain.model.TipoEscala
+import com.notasapp.utils.getDisplayName
 
 /**
  * Wizard de 3 pasos para crear una nueva materia.
@@ -248,6 +250,7 @@ private fun Step2Escala(
     onNotaAprobacionChange: (Float) -> Unit,
     onNext: () -> Unit
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -272,7 +275,7 @@ private fun Step2Escala(
                 FilterChip(
                     selected = state.tipoEscala == tipo,
                     onClick = { onTipoEscalaChange(tipo) },
-                    label = { Text(tipo.displayName) },
+                    label = { Text(tipo.getDisplayName(context)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

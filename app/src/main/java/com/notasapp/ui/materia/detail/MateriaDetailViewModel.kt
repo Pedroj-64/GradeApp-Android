@@ -103,6 +103,8 @@ class MateriaDetailViewModel @Inject constructor(
                         porcentajeDelComponente = porcentajeDelComponente
                     )
                 )
+            } catch (e: IllegalArgumentException) {
+                _error.value = e.message ?: "No se pudo agregar la nota"
             } catch (e: Exception) {
                 Timber.e(e, "Error al agregar sub-nota al componente $componenteId")
                 _error.value = "No se pudo agregar la nota"
@@ -143,6 +145,8 @@ class MateriaDetailViewModel @Inject constructor(
                         porcentaje = porcentaje
                     )
                 )
+            } catch (e: IllegalArgumentException) {
+                _error.value = e.message ?: "No se pudo agregar el detalle"
             } catch (e: Exception) {
                 Timber.e(e, "Error al agregar detalle a sub-nota $subNotaId")
                 _error.value = "No se pudo agregar el detalle"
@@ -251,6 +255,40 @@ class MateriaDetailViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Error al duplicar materia")
                 _error.value = "No se pudo duplicar la materia"
+            }
+        }
+    }
+
+    // ── Metas y notas ─────────────────────────────────────────────
+
+    /**
+     * Actualiza la nota meta (objetivo académico) de la materia.
+     * @param notaMeta Nota objetivo, o null para eliminar la meta.
+     */
+    fun actualizarNotaMeta(notaMeta: Float?) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.updateNotaMeta(materiaId, notaMeta)
+                Timber.i("Nota meta actualizada: $notaMeta")
+            } catch (e: Exception) {
+                Timber.e(e, "Error al actualizar nota meta")
+                _error.value = "No se pudo guardar la meta"
+            }
+        }
+    }
+
+    /**
+     * Actualiza las notas personales de la materia.
+     * @param notas Texto de notas, o null para borrar.
+     */
+    fun actualizarNotas(notas: String?) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.updateNotas(materiaId, notas?.takeIf { it.isNotBlank() })
+                Timber.i("Notas actualizadas")
+            } catch (e: Exception) {
+                Timber.e(e, "Error al actualizar notas")
+                _error.value = "No se pudo guardar las notas"
             }
         }
     }

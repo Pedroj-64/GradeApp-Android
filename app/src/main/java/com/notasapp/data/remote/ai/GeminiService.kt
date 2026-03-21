@@ -81,6 +81,18 @@ class GeminiService @Inject constructor() {
 
         /** URL base del backend proxy (configurada en local.properties). */
         private val BACKEND_URL: String = BuildConfig.BACKEND_URL
+            .trim()
+            .takeUnless { it.equals("null", ignoreCase = true) || it.isBlank() }
+            ?: ""
+
+        private fun normalizeApiKey(rawValue: String): String = rawValue
+            .trim()
+            .takeUnless {
+                it.isBlank() ||
+                    it.equals("null", ignoreCase = true) ||
+                    it.startsWith("YOUR_", ignoreCase = true)
+            }
+            ?: ""
     }
 
     /** Throttle básico: ~13 RPM global. */
@@ -133,8 +145,8 @@ class GeminiService @Inject constructor() {
         if (elapsed < minIntervalMs) delay(minIntervalMs - elapsed)
 
         // ── 2. Gemini REST API ─────────────────────────────────────
-        val geminiKey = BuildConfig.GEMINI_API_KEY
-        if (geminiKey.isNotBlank() && geminiKey != "null") {
+        val geminiKey = normalizeApiKey(BuildConfig.GEMINI_API_KEY)
+        if (geminiKey.isNotBlank()) {
             try {
                 Timber.d("Estrategia 2: Gemini REST API")
                 val text = tryProviderModels("Gemini", GEMINI_MODELS) { model ->
@@ -149,8 +161,8 @@ class GeminiService @Inject constructor() {
         }
 
         // ── 3. Groq REST API ───────────────────────────────────────
-        val groqKey = BuildConfig.GROQ_API_KEY
-        if (groqKey.isNotBlank() && groqKey != "null") {
+        val groqKey = normalizeApiKey(BuildConfig.GROQ_API_KEY)
+        if (groqKey.isNotBlank()) {
             try {
                 Timber.d("Estrategia 3: Groq REST API")
                 val text = tryProviderModels("Groq", GROQ_MODELS) { model ->
@@ -165,8 +177,8 @@ class GeminiService @Inject constructor() {
         }
 
         // ── 4. OpenRouter REST API ─────────────────────────────────
-        val orKey = BuildConfig.OPENROUTER_API_KEY
-        if (orKey.isNotBlank() && orKey != "null") {
+        val orKey = normalizeApiKey(BuildConfig.OPENROUTER_API_KEY)
+        if (orKey.isNotBlank()) {
             try {
                 Timber.d("Estrategia 4: OpenRouter REST API")
                 val text = tryProviderModels("OpenRouter", OPENROUTER_MODELS) { model ->
@@ -183,9 +195,9 @@ class GeminiService @Inject constructor() {
         // ── Todos agotados ─────────────────────────────────────────
         val summary = errors.joinToString(" | ")
         val noKeysMsg = buildString {
-            if (geminiKey.isBlank() || geminiKey == "null") append("GEMINI_API_KEY, ")
-            if (groqKey.isBlank() || groqKey == "null") append("GROQ_API_KEY, ")
-            if (orKey.isBlank() || orKey == "null") append("OPENROUTER_API_KEY, ")
+            if (geminiKey.isBlank()) append("GEMINI_API_KEY, ")
+            if (groqKey.isBlank()) append("GROQ_API_KEY, ")
+            if (orKey.isBlank()) append("OPENROUTER_API_KEY, ")
         }.trimEnd(',', ' ')
 
         val errorMsg = if (noKeysMsg.isNotBlank())
@@ -193,7 +205,7 @@ class GeminiService @Inject constructor() {
         else
             "Todos los proveedores de IA fallaron. $summary"
 
-        Result.failure(Exception(errorMsg))
+        Result.failure(IllegalStateException(errorMsg))
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -255,10 +267,11 @@ class GeminiService @Inject constructor() {
      * POST /v1beta/models/{model}:generateContent?key={apiKey}
      */
     private fun callGeminiRest(apiKey: String, modelName: String, prompt: String): String {
-        val url = URL("$GEMINI_API_BASE/models/$modelName:generateContent?key=$apiKey")
+        val url = URL("$GEMINI_API_BASE/models/$modelName:generateContent")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+            setRequestProperty("x-goog-api-key", apiKey)
             connectTimeout = 30_000
             readTimeout = 60_000
             doOutput = true
@@ -407,7 +420,7 @@ class GeminiService @Inject constructor() {
             conn.inputStream.bufferedReader().readText()
         } else {
             val errorBody = conn.errorStream?.bufferedReader()?.readText() ?: ""
-            throw Exception("Backend proxy error $responseCode: $errorBody")
+            throw Exception("Backend proxy error $responseCode: ${extractBackendErrorMessage(errorBody)}")
         }
 
         val json = JSONObject(responseBody)
@@ -425,6 +438,16 @@ class GeminiService @Inject constructor() {
                 url = obj.getString("url"),
                 autor = obj.optString("autor", "").takeIf { it != "null" && it.isNotBlank() }
             )
+        }
+    }
+
+    private fun extractBackendErrorMessage(rawBody: String): String {
+        if (rawBody.isBlank()) return "Sin detalle de error"
+        return try {
+            val obj = JSONObject(rawBody)
+            obj.optString("message").ifBlank { rawBody.take(300) }
+        } catch (_: Exception) {
+            rawBody.take(300)
         }
     }
 

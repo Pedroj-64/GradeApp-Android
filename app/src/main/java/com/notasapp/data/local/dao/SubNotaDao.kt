@@ -36,6 +36,9 @@ interface SubNotaDao {
     @Query("SELECT * FROM sub_notas WHERE id = :id")
     suspend fun getSubNotaById(id: Long): SubNotaEntity?
 
+    @Query("SELECT COALESCE(SUM(porcentajeDelComponente), 0) FROM sub_notas WHERE componenteId = :componenteId")
+    suspend fun getSumaPorcentajeByComponente(componenteId: Long): Float
+
     /**
      * Actualiza el valor numérico de una sub-nota.
      * Llamado cada vez que el usuario ingresa o edita una nota.

@@ -16,6 +16,14 @@ if (localPropsFile.exists()) {
     localPropsFile.inputStream().use { localProps.load(it) }
 }
 
+fun secretOrEmpty(name: String): String {
+    val raw = localProps.getProperty(name)?.trim().orEmpty()
+    if (raw.isBlank()) return ""
+    if (raw.equals("null", ignoreCase = true)) return ""
+    if (raw.startsWith("YOUR_", ignoreCase = true)) return ""
+    return raw
+}
+
 android {
     namespace = "com.notasapp"
     compileSdk = 35
@@ -24,34 +32,34 @@ android {
         applicationId = "com.notasapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "2.1.0"
+        versionCode = 5
+        versionName = "2.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
             "String",
             "GOOGLE_CLIENT_ID",
-            "\"${localProps.getProperty("GOOGLE_CLIENT_ID") ?: "YOUR_WEB_CLIENT_ID_HERE"}\""
+            "\"${secretOrEmpty("GOOGLE_CLIENT_ID")}\""
         )
         buildConfigField(
             "String",
             "GEMINI_API_KEY",
-            "\"${localProps.getProperty("GEMINI_API_KEY") ?: ""}\""
+            "\"${secretOrEmpty("GEMINI_API_KEY")}\""
         )
         buildConfigField(
             "String",
             "BACKEND_URL",
-            "\"${localProps.getProperty("BACKEND_URL") ?: ""}\""
+            "\"${secretOrEmpty("BACKEND_URL")}\""
         )
         buildConfigField(
             "String",
             "GROQ_API_KEY",
-            "\"${localProps.getProperty("GROQ_API_KEY") ?: ""}\""
+            "\"${secretOrEmpty("GROQ_API_KEY")}\""
         )
         buildConfigField(
             "String",
             "OPENROUTER_API_KEY",
-            "\"${localProps.getProperty("OPENROUTER_API_KEY") ?: ""}\""
+            "\"${secretOrEmpty("OPENROUTER_API_KEY")}\""
         )
         vectorDrawables {
             useSupportLibrary = true

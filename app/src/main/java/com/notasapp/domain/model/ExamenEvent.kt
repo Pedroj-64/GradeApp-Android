@@ -11,14 +11,14 @@ import java.util.Locale
 /**
  * Tipo de evento académico para el calendario.
  */
-enum class TipoEvento(val displayName: String, val emoji: String) {
-    PARCIAL("Parcial", "\uD83D\uDCDD"),         // 📝
-    FINAL("Final", "\uD83C\uDFAF"),             // 🎯
-    QUIZ("Quiz", "\u2753"),                       // ❓
-    TAREA("Tarea", "\uD83D\uDCCB"),             // 📋
-    PROYECTO("Proyecto", "\uD83D\uDEE0"),        // 🛠
-    EXPOSICION("Exposición", "\uD83C\uDFA4"),   // 🎤
-    OTRO("Otro", "\uD83D\uDCC5");               // 📅
+enum class TipoEvento(val emoji: String) {
+    PARCIAL("\uD83D\uDCDD"),         // 📝
+    FINAL("\uD83C\uDFAF"),             // 🎯
+    QUIZ("\u2753"),                       // ❓
+    TAREA("\uD83D\uDCCB"),             // 📋
+    PROYECTO("\uD83D\uDEE0"),        // 🛠
+    EXPOSICION("\uD83C\uDFA4"),   // 🎤
+    OTRO("\uD83D\uDCC5");               // 📅
 
     companion object {
         fun fromString(s: String): TipoEvento =
@@ -62,31 +62,18 @@ data class ExamenEvent(
     /** Formato legible: "15 mar 2026, 10:30 AM". */
     val fechaDisplay: String
         get() = fechaHora.format(
-            DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale("es"))
+            DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale.getDefault())
         )
 
     /** Formato corto: "15 mar". */
     val fechaCorta: String
-        get() = fecha.format(DateTimeFormatter.ofPattern("d MMM", Locale("es")))
+        get() = fecha.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
 
     /** Formato hora: "10:30 AM". */
     val horaDisplay: String
-        get() = hora.format(DateTimeFormatter.ofPattern("h:mm a", Locale("es")))
+        get() = hora.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()))
 
     /** True si el evento ya pasó. */
     val yaPaso: Boolean
         get() = fechaEpochMs < System.currentTimeMillis()
-
-    /** Descripción del recordatorio. */
-    val recordatorioDisplay: String
-        get() = when (recordatorioMinutos) {
-            0 -> "Sin recordatorio"
-            15 -> "15 minutos antes"
-            30 -> "30 minutos antes"
-            60 -> "1 hora antes"
-            120 -> "2 horas antes"
-            1440 -> "1 día antes"
-            2880 -> "2 días antes"
-            else -> "$recordatorioMinutos min antes"
-        }
 }

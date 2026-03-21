@@ -21,8 +21,8 @@ data class ConfiguracionNota(
  * - [ACADEMICO]: redondea con la regla "≥ x.x5 sube al siguiente décimo".
  *   En Colombia, por ejemplo: 2.95 → 3.0, 2.94 → 2.9 (con 1 decimal).
  */
-enum class ModoRedondeo(val displayName: String) {
-    MATEMATICO("Matemático (estándar)"),
-    TRUNCAR("Truncar"),
-    ACADEMICO("Académico (≥0.05 sube)")
+enum class ModoRedondeo {
+    MATEMATICO,
+    TRUNCAR,
+    ACADEMICO
 }

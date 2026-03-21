@@ -1,12 +1,17 @@
 package com.notasapp.ui.export
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.notasapp.data.local.UserPreferencesRepository
+import com.notasapp.data.remote.NetworkResult
 import com.notasapp.domain.repository.MateriaRepository
+import com.notasapp.domain.repository.SheetsRepository
 import com.notasapp.navigation.Screen
 import com.notasapp.utils.ExcelExporter
 import com.notasapp.utils.PdfExporter
@@ -37,6 +42,8 @@ import javax.inject.Inject
 class ExportViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val materiaRepository: MateriaRepository,
+    private val sheetsRepository: SheetsRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     private val excelExporter: ExcelExporter,
     private val pdfExporter: PdfExporter,
     @ApplicationContext private val context: Context
@@ -49,18 +56,44 @@ class ExportViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ExportUiState())
     val uiState: StateFlow<ExportUiState> = _uiState.asStateFlow()
 
+    init {
+        // Cargar nombre de materia para sugerir nombres de archivo
+        viewModelScope.launch {
+            val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
+            materia?.let { m ->
+                val sanitizedName = sanitizeFilename(m.nombre)
+                _uiState.update {
+                    it.copy(
+                        materiaNombre = m.nombre,
+                        suggestedExcelFilename = "notas_$sanitizedName.xlsx",
+                        suggestedPdfFilename = "notas_$sanitizedName.pdf"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Sanitiza el nombre para usarlo como filename válido.
+     */
+    private fun sanitizeFilename(name: String): String =
+        name.replace(Regex("[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ_\\-]"), "_")
+            .replace(Regex("_+"), "_")
+            .trim('_')
+            .take(50)
+
     // ── Excel ────────────────────────────────────────────────────────────────
 
     /**
      * Nombre sugerido para el archivo .xlsx al abrir el SAF picker.
      * Puede llamarse desde la UI para prerellenar el nombre en el diálogo del sistema.
      */
-    fun sugerirNombreArchivo(): String = "notas_materia_${materiaId}.xlsx"
+    fun sugerirNombreArchivo(): String = _uiState.value.suggestedExcelFilename
 
     /**
      * Nombre sugerido para el archivo .pdf al abrir el SAF picker.
      */
-    fun sugerirNombrePdf(): String = "notas_materia_${materiaId}.pdf"
+    fun sugerirNombrePdf(): String = _uiState.value.suggestedPdfFilename
 
     /**
      * Exporta la materia a .xlsx escribiendo en el URI elegido por el usuario (SAF).
@@ -208,6 +241,93 @@ class ExportViewModel @Inject constructor(
             exportError   = null
         )
     }
+
+    fun exportarDrive() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isExporting = true,
+                    exportError = null,
+                    exportSuccess = false
+                )
+            }
+
+            try {
+                val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
+                    ?: throw IllegalStateException("Materia no encontrada")
+                val userEmail = userPreferencesRepository.userEmail.first()
+                    ?: throw IllegalStateException("Debes iniciar sesión para exportar a Google Drive")
+
+                when (val result = sheetsRepository.syncMateria(materia, userEmail)) {
+                    is NetworkResult.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isExporting = false,
+                                exportSuccess = true,
+                                driveWebLink = result.data
+                            )
+                        }
+                    }
+
+                    is NetworkResult.Error -> {
+                        val recoverable = (result.cause as? UserRecoverableAuthIOException)
+                        if (result.needsUserRecovery && recoverable != null) {
+                            _uiState.update {
+                                it.copy(
+                                    isExporting = false,
+                                    driveRecoveryIntent = recoverable.intent,
+                                    pendingDriveRetry = true
+                                )
+                            }
+                        } else {
+                            _uiState.update {
+                                it.copy(
+                                    isExporting = false,
+                                    exportError = result.message,
+                                    pendingDriveRetry = false
+                                )
+                            }
+                        }
+                    }
+
+                    is NetworkResult.Loading -> {
+                        _uiState.update { it.copy(isExporting = true) }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error al exportar a Drive")
+                _uiState.update {
+                    it.copy(
+                        isExporting = false,
+                        exportError = "[${e.javaClass.simpleName}] ${e.message}",
+                        pendingDriveRetry = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun onDriveRecoveryIntentConsumed() {
+        _uiState.update { it.copy(driveRecoveryIntent = null) }
+    }
+
+    fun onDriveAuthResult(granted: Boolean) {
+        val shouldRetry = _uiState.value.pendingDriveRetry
+        _uiState.update {
+            it.copy(
+                pendingDriveRetry = false,
+                driveRecoveryIntent = null
+            )
+        }
+
+        if (granted && shouldRetry) {
+            exportarDrive()
+        } else if (!granted) {
+            _uiState.update {
+                it.copy(exportError = "No se concedieron permisos de Google Drive")
+            }
+        }
+    }
 }
 
 data class ExportUiState(
@@ -216,5 +336,14 @@ data class ExportUiState(
     val exportedFilePath: String? = null,
     /** URI FileProvider del .xlsx generado, listo para compartir. */
     val exportedFileUri: Uri? = null,
-    val exportError: String? = null
+    val exportError: String? = null,
+    val driveWebLink: String? = null,
+    val driveRecoveryIntent: Intent? = null,
+    val pendingDriveRetry: Boolean = false,
+    /** Nombre de la materia cargado. */
+    val materiaNombre: String? = null,
+    /** Nombre sugerido para el archivo Excel. */
+    val suggestedExcelFilename: String = "notas.xlsx",
+    /** Nombre sugerido para el archivo PDF. */
+    val suggestedPdfFilename: String = "notas.pdf"
 )

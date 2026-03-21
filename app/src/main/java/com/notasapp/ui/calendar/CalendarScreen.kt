@@ -1,5 +1,8 @@
 package com.notasapp.ui.calendar
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -75,15 +78,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notasapp.R
 import com.notasapp.domain.model.ExamenEvent
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.TipoEvento
 import com.notasapp.ui.components.NotificationPermissionFlow
+import com.notasapp.utils.getDisplayName
+import com.notasapp.utils.getRecordatorioDisplay
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -102,6 +109,17 @@ fun CalendarScreen(
     val formState by viewModel.formState.collectAsState()
     val materias by viewModel.materias.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val calendarAuthLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onGoogleCalendarAuthResult(result.resultCode == Activity.RESULT_OK)
+    }
+
+    LaunchedEffect(uiState.googleCalendarRecoveryIntent) {
+        val intent = uiState.googleCalendarRecoveryIntent ?: return@LaunchedEffect
+        viewModel.onGoogleCalendarRecoveryIntentConsumed()
+        calendarAuthLauncher.launch(intent)
+    }
 
     LaunchedEffect(uiState.successMessage, uiState.error) {
         val msg = uiState.successMessage ?: uiState.error ?: return@LaunchedEffect
@@ -187,7 +205,6 @@ fun CalendarScreen(
             isEdit = uiState.showEditDialog,
             formState = formState,
             materias = materias,
-            onFormChange = { viewModel.updateForm { it } },
             onUpdateTitulo = { t -> viewModel.updateForm { copy(titulo = t) } },
             onUpdateDescripcion = { d -> viewModel.updateForm { copy(descripcion = d) } },
             onUpdateTipo = { t -> viewModel.updateForm { copy(tipoEvento = t) } },
@@ -242,7 +259,7 @@ private fun MonthHeader(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale("es"))
+                text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
                     .replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
@@ -431,9 +448,9 @@ private fun DayEventsList(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = selectedDate.let {
-                    "${it.dayOfMonth} de ${it.month.getDisplayName(TextStyle.FULL, Locale("es"))}"
-                },
+                text = selectedDate.format(
+                    DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())
+                ).replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -493,6 +510,7 @@ private fun EventCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Card(
@@ -541,7 +559,7 @@ private fun EventCard(
                     )
                 }
                 Text(
-                    text = event.recordatorioDisplay,
+                    text = getRecordatorioDisplay(context, event.recordatorioMinutos),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -588,7 +606,6 @@ private fun EventFormDialog(
     isEdit: Boolean,
     formState: EventFormState,
     materias: List<Materia>,
-    onFormChange: (EventFormState) -> Unit,
     onUpdateTitulo: (String) -> Unit,
     onUpdateDescripcion: (String) -> Unit,
     onUpdateTipo: (TipoEvento) -> Unit,
@@ -599,6 +616,7 @@ private fun EventFormDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     var tipoExpanded by remember { mutableStateOf(false) }
     var materiaExpanded by remember { mutableStateOf(false) }
     var recordatorioExpanded by remember { mutableStateOf(false) }
@@ -615,7 +633,7 @@ private fun EventFormDialog(
                     value = formState.titulo,
                     onValueChange = onUpdateTitulo,
                     label = { Text(stringResource(R.string.calendar_event_title_hint)) },
-                    placeholder = { Text("Ej: Parcial 1 de Cálculo") },
+                    placeholder = { Text(stringResource(R.string.calendar_event_title_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -626,7 +644,7 @@ private fun EventFormDialog(
                     onExpandedChange = { tipoExpanded = it }
                 ) {
                     OutlinedTextField(
-                        value = "${formState.tipoEvento.emoji} ${formState.tipoEvento.displayName}",
+                        value = "${formState.tipoEvento.emoji} ${formState.tipoEvento.getDisplayName(context)}",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(R.string.calendar_event_type)) },
@@ -639,7 +657,7 @@ private fun EventFormDialog(
                     ) {
                         TipoEvento.entries.forEach { tipo ->
                             DropdownMenuItem(
-                                text = { Text("${tipo.emoji} ${tipo.displayName}") },
+                                text = { Text("${tipo.emoji} ${tipo.getDisplayName(context)}") },
                                 onClick = {
                                     onUpdateTipo(tipo)
                                     tipoExpanded = false
@@ -704,13 +722,13 @@ private fun EventFormDialog(
                 ) {
                     OutlinedButton(
                         onClick = { onUpdateFecha(formState.fecha.minusDays(1)) }
-                    ) { Text("- 1 día") }
+                    ) { Text(stringResource(R.string.calendar_prev_day)) }
                     OutlinedButton(
                         onClick = { onUpdateFecha(LocalDate.now()) }
                     ) { Text(stringResource(R.string.calendar_today)) }
                     OutlinedButton(
                         onClick = { onUpdateFecha(formState.fecha.plusDays(1)) }
-                    ) { Text("+ 1 día") }
+                    ) { Text(stringResource(R.string.calendar_next_day)) }
                 }
 
                 // Hora
@@ -719,10 +737,10 @@ private fun EventFormDialog(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Hora:", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.calendar_hour_label), style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(
                         onClick = { onUpdateHora(formState.hora.minusHours(1)) }
-                    ) { Text("-1h") }
+                    ) { Text(stringResource(R.string.calendar_1h_minus)) }
                     Text(
                         text = formState.hora.let {
                             "%02d:%02d".format(it.hour, it.minute)
@@ -751,7 +769,7 @@ private fun EventFormDialog(
                     )
                     OutlinedTextField(
                         value = recordatorioLabels[formState.recordatorioMinutos]
-                            ?: "${formState.recordatorioMinutos} min antes",
+                            ?: stringResource(R.string.calendar_n_min_before, formState.recordatorioMinutos),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(R.string.calendar_event_reminder)) },
@@ -806,6 +824,7 @@ private fun EventFormDialog(
 //  Google Calendar Import Dialog
 // ═════════════════════════════════════════════════════════════════════════════
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GoogleCalendarImportDialog(
     materias: List<Materia>,

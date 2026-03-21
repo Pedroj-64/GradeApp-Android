@@ -37,7 +37,7 @@ import com.notasapp.data.local.entities.UsuarioEntity
         SubNotaDetailEntity::class,
         ExamenEventEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true     // genera JSON en /schemas para historial de migraciones
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -134,6 +134,22 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
+         * Migración v5 → v6: agrega las columnas `notaMeta` y `notas` a la tabla `materias`.
+         * - `notaMeta`: nota meta que el usuario desea alcanzar (objetivo académico).
+         * - `notas`: campo de texto libre para comentarios del usuario.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE materias ADD COLUMN notaMeta REAL DEFAULT NULL"
+                )
+                database.execSQL(
+                    "ALTER TABLE materias ADD COLUMN notas TEXT DEFAULT NULL"
+                )
+            }
+        }
+
+        /**
          * Crea la instancia de Room.
          * Llamado únicamente desde [DatabaseModule] (Hilt).
          * No llamar directamente desde código de producto.
@@ -144,7 +160,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .fallbackToDestructiveMigration() // fallback de seguridad para dev
                 .build()
 

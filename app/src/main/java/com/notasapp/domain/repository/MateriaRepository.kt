@@ -64,4 +64,12 @@ interface MateriaRepository {
     // ── Sheets ID ────────────────────────────────────────────────
 
     suspend fun updateSheetsId(materiaId: Long, sheetsId: String?)
+
+    // ── Metas y notas ────────────────────────────────────────────
+
+    /** Actualiza la nota meta (objetivo académico) de una materia. */
+    suspend fun updateNotaMeta(materiaId: Long, notaMeta: Float?)
+
+    /** Actualiza las notas personales de una materia. */
+    suspend fun updateNotas(materiaId: Long, notas: String?)
 }

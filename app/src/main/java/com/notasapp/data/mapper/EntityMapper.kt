@@ -92,6 +92,8 @@ fun MateriaConComponentes.toDomain(): Materia = Materia(
     creditos = materia.creditos,
     tipoEscala = tipoEscalaFromString(materia.tipoEscala),
     googleSheetsId = materia.googleSheetsId,
+    notaMeta = materia.notaMeta,
+    notas = materia.notas,
     componentes = componentesConSubNotas.sortedBy { it.componente.orden }.map { it.toDomain() }
 )
 
@@ -106,7 +108,9 @@ fun Materia.toEntity(): MateriaEntity = MateriaEntity(
     notaAprobacion = notaAprobacion,
     creditos = creditos,
     tipoEscala = tipoEscala.name,
-    googleSheetsId = googleSheetsId
+    googleSheetsId = googleSheetsId,
+    notaMeta = notaMeta,
+    notas = notas
 )
 
 // ── Helpers ──────────────────────────────────────────────────────

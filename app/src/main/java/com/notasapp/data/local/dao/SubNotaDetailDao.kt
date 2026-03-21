@@ -35,6 +35,9 @@ interface SubNotaDetailDao {
     @Query("SELECT * FROM sub_nota_details WHERE id = :id")
     suspend fun getById(id: Long): SubNotaDetailEntity?
 
+    @Query("SELECT COALESCE(SUM(porcentaje), 0) FROM sub_nota_details WHERE subNotaId = :subNotaId")
+    suspend fun getSumaPorcentajeBySubNota(subNotaId: Long): Float
+
     @Query("UPDATE sub_nota_details SET valor = :valor WHERE id = :id")
     suspend fun updateValor(id: Long, valor: Float?)
 

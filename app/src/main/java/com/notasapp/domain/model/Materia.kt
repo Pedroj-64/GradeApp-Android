@@ -15,6 +15,8 @@ package com.notasapp.domain.model
  * @property notaAprobacion  Nota mínima para aprobar.
  * @property tipoEscala      Tipo de escala de la materia.
  * @property googleSheetsId  ID de la hoja de Sheets vinculada (null si no sincronizado).
+ * @property notaMeta        Nota meta que el usuario desea alcanzar (opcional).
+ * @property notas           Notas o comentarios del usuario sobre la materia.
  * @property componentes     Componentes de evaluación con sus sub-notas.
  */
 data class Materia(
@@ -29,6 +31,8 @@ data class Materia(
     val creditos: Int = 0,
     val tipoEscala: TipoEscala = TipoEscala.NUMERICO_5,
     val googleSheetsId: String? = null,
+    val notaMeta: Float? = null,
+    val notas: String? = null,
     val componentes: List<Componente> = emptyList()
 ) {
     /**
@@ -120,4 +124,74 @@ data class Materia(
      */
     val completa: Boolean
         get() = componentes.isNotEmpty() && componentes.all { it.completo }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Tracking de Meta
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * True si el usuario ha definido una meta para esta materia.
+     */
+    val tieneMeta: Boolean get() = notaMeta != null
+
+    /**
+     * True si el promedio actual ya alcanzó o superó la meta definida.
+     */
+    val metaAlcanzada: Boolean
+        get() = notaMeta != null && (promedio ?: 0f) >= notaMeta
+
+    /**
+     * Progreso hacia la meta (0.0 – 1.0).
+     * Retorna null si no hay meta definida o si la meta es 0.
+     */
+    val progresoMeta: Float?
+        get() {
+            val meta = notaMeta ?: return null
+            if (meta <= 0f) return null
+            val actual = promedio ?: 0f
+            return (actual / meta).coerceIn(0f, 1f)
+        }
+
+    /**
+     * Nota que el estudiante necesitaría promediar en lo restante
+     * para alcanzar exactamente la meta. Null si ya alcanzó la meta
+     * o no queda porcentaje por evaluar.
+     */
+    val notaNecesariaParaMeta: Float?
+        get() {
+            val meta = notaMeta ?: return null
+            if (metaAlcanzada) return null
+            val restante = 1f - porcentajeEvaluado
+            if (restante <= 0f) return null
+            val necesita = (meta - acumulado) / restante
+            return if (necesita in 0f..escalaMax) necesita else null
+        }
+
+    /**
+     * Estado del progreso hacia la meta.
+     */
+    val estadoMeta: EstadoMeta
+        get() = when {
+            notaMeta == null -> EstadoMeta.SIN_META
+            metaAlcanzada -> EstadoMeta.ALCANZADA
+            notaNecesariaParaMeta == null -> EstadoMeta.INALCANZABLE
+            (notaNecesariaParaMeta ?: 0f) <= notaAprobacion -> EstadoMeta.EN_CAMINO
+            else -> EstadoMeta.REQUIERE_ESFUERZO
+        }
+}
+
+/**
+ * Estado del progreso hacia la meta académica definida por el usuario.
+ */
+enum class EstadoMeta {
+    /** No hay meta definida. */
+    SIN_META,
+    /** La meta ya fue alcanzada. */
+    ALCANZADA,
+    /** El estudiante va bien encaminado (necesita nota ≤ aprobación). */
+    EN_CAMINO,
+    /** El estudiante necesita esforzarse más (necesita nota > aprobación). */
+    REQUIERE_ESFUERZO,
+    /** La meta ya es matemáticamente inalcanzable. */
+    INALCANZABLE
 }

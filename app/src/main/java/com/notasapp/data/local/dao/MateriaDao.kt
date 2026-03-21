@@ -71,6 +71,14 @@ interface MateriaDao {
     @Query("UPDATE materias SET ultimaModificacionMs = :ts WHERE id = :id")
     suspend fun touchUltimaModificacion(id: Long, ts: Long = System.currentTimeMillis())
 
+    /** Actualiza la nota meta (objetivo académico) de una materia. */
+    @Query("UPDATE materias SET notaMeta = :notaMeta, ultimaModificacionMs = :ts WHERE id = :id")
+    suspend fun updateNotaMeta(id: Long, notaMeta: Float?, ts: Long = System.currentTimeMillis())
+
+    /** Actualiza las notas personales de una materia. */
+    @Query("UPDATE materias SET notas = :notas, ultimaModificacionMs = :ts WHERE id = :id")
+    suspend fun updateNotas(id: Long, notas: String?, ts: Long = System.currentTimeMillis())
+
     /**
      * Retorna todas las materias del usuario con sus componentes y sub-notas.
      * Una sola lectura (suspend), sin Flow. Se usa en el Widget y en BackupManager.

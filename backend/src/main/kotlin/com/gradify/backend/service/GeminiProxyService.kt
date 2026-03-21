@@ -39,13 +39,21 @@ class GeminiProxyService(
         listOf(primaryModel) + fallbackModels
     }
 
+    private val normalizedApiKey: String by lazy {
+        apiKey.trim().takeUnless {
+            it.isBlank() || it.equals("null", ignoreCase = true)
+        } ?: ""
+    }
+
     /**
      * Genera recomendaciones usando la REST API de Gemini con fallback.
      *
      * @return Pair<List<RecomendacionDto>, String> → recomendaciones + nombre del modelo usado
      */
     fun generarRecomendaciones(prompt: String): Pair<List<RecomendacionDto>, String> {
-        require(apiKey.isNotBlank()) { "GEMINI_API_KEY no está configurada en el servidor" }
+        require(normalizedApiKey.isNotBlank()) {
+            "GEMINI_API_KEY no está configurada en el servidor"
+        }
 
         var lastException: Exception? = null
 
@@ -82,7 +90,7 @@ class GeminiProxyService(
      * Llama a la REST API de Gemini (/v1beta/models/{model}:generateContent).
      */
     private fun callGeminiApi(modelName: String, prompt: String): String {
-        val url = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey"
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent"
 
         val requestBody = gson.toJson(mapOf(
             "contents" to listOf(
@@ -96,10 +104,11 @@ class GeminiProxyService(
 
         val request = Request.Builder()
             .url(url)
+            .addHeader("x-goog-api-key", normalizedApiKey)
             .post(requestBody.toRequestBody("application/json".toMediaType()))
             .build()
 
-        client.newCall(request).execute().use { response ->
+        return client.newCall(request).execute().use { response ->
             val body = response.body?.string() ?: ""
 
             if (!response.isSuccessful) {
@@ -114,9 +123,7 @@ class GeminiProxyService(
             val firstCandidate = candidates[0].asJsonObject
             val content = firstCandidate.getAsJsonObject("content")
             val parts = content.getAsJsonArray("parts")
-            val text = parts[0].asJsonObject.get("text").asString
-
-            return text
+            parts[0].asJsonObject.get("text").asString
         }
     }
 
@@ -139,7 +146,7 @@ class GeminiProxyService(
             }.filter { it.titulo.isNotBlank() && it.url.isNotBlank() }
         } catch (e: Exception) {
             log.error("Error parseando recomendaciones: {}", e.message)
-            emptyList()
+            throw Exception("Error parseando respuesta de IA: ${e.message}")
         }
     }
 
