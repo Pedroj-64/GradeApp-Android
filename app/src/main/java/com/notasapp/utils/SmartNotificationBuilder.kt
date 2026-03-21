@@ -69,7 +69,7 @@ object SmartNotificationBuilder {
 
             // Aprobando justo
             promedio >= notaAprobacion -> "APROBANDO" to
-                    "Llevas ${formatNota(promedio)} en $materiaNombre, justo en el límite. Este ${eventType.displayName.lowercase()} es clave para asegurar."
+                    "Llevas ${formatNota(promedio)} en $materiaNombre, justo en el límite. Este evento es clave para asegurar."
 
             // Cerca de aprobar (falta poco)
             notaNecesaria != null && notaNecesaria <= materia.escalaMax * 0.7f -> "RECUPERABLE" to
@@ -77,7 +77,7 @@ object SmartNotificationBuilder {
 
             // En riesgo alto
             notaNecesaria != null && notaNecesaria <= materia.escalaMax -> "RIESGO" to
-                    "Necesitas ${formatNota(notaNecesaria)} para aprobar $materiaNombre. Este ${eventType.displayName.lowercase()} es crucial — ¡dale con todo!"
+                    "Necesitas ${formatNota(notaNecesaria)} para aprobar $materiaNombre. Este evento es crucial — ¡dale con todo!"
 
             // Situación muy difícil
             else -> "CRITICO" to
